@@ -240,8 +240,15 @@ body { font-family: 'Cairo', sans-serif; background: var(--green-deep); color: v
 .btn-voice-symptoms{background:linear-gradient(135deg,#1a3a6e,#2980b9);color:#fff;border:none;border-radius:12px;padding:0.7rem 1.4rem;font-family:'Cairo',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:0.4rem}
 .btn-voice-symptoms.listening{background:linear-gradient(135deg,#7b1a1a,#e74c3c);animation:pulse2 0.7s ease-in-out infinite}
 @keyframes pulse2{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+/* ===== CLAUDE SCREEN ===== */
+#claude-screen { display:none; position:fixed; inset:0; z-index:1100; flex-direction:column; background:#061a0e; }
+#claude-screen.open { display:flex; }
+#claude-top-bar { background:linear-gradient(135deg,#0f3d20,#1e7a3a); padding:0.7rem 1rem; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+#claude-top-bar span { color:#fff; font-weight:900; font-size:0.9rem; }
+#claude-close-btn { background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:999px; padding:0.3rem 0.9rem; font-family:'Cairo',sans-serif; font-size:0.8rem; font-weight:700; cursor:pointer; }
+#claude-content { flex:1; overflow-y:auto; }
 </style>
-</head>
+
 <body>
 <div class="bg-canvas" id="bgCanvas"></div>
 
@@ -1253,16 +1260,12 @@ function createBg() {
 
 // ===== CLAUDE UPGRADE =====
 function showClaudeUpgrade() {
-  const modal = document.getElementById('claude-upgrade-modal');
-  const iframe = document.getElementById('claude-iframe');
-  iframe.src = 'plant-doctor-v3.html';
-  modal.style.display = 'flex';
+  document.getElementById('claude-screen').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
-function closeClaudeUpgrade() {
-  const modal = document.getElementById('claude-upgrade-modal');
-  const iframe = document.getElementById('claude-iframe');
-  modal.style.display = 'none';
-  iframe.src = '';
+function closeClaudeScreen() {
+  document.getElementById('claude-screen').classList.remove('open');
+  document.body.style.overflow = '';
 }
 function saveClaudeKey() {
   const key = document.getElementById('claude-key-input').value.trim();
@@ -1271,11 +1274,9 @@ function saveClaudeKey() {
     return;
   }
   localStorage.setItem('claudeKey', key);
-  closeClaudeUpgrade();
+  closeClaudeScreen();
   hideAllAds();
-  const banner = document.getElementById('claude-banner');
-  if (banner) banner.innerHTML = `<div style="background:linear-gradient(135deg,#0f3d20,#1e7a3a);border-radius:12px;padding:0.8rem;text-align:center;color:#fff;font-size:0.85rem;font-weight:700">⭐ Claude مفعّل! التشخيص القادم سيكون بـ Claude الأقوى 🎉</div>`;
-  alert('🎉 تم تفعيل Claude! التشخيص القادم سيكون بـ Claude الأقوى');
+  alert('🎉 تم تفعيل Claude! التشخيص القادم سيكون بـ Claude الأقوى ⭐');
 }
 
 function hideAllAds() {
@@ -1708,5 +1709,52 @@ checkGeminiKey();
 if (localStorage.getItem('claudeKey')) hideAllAds();
 else startAdTimer();
 </script>
+<!-- ===== CLAUDE ACTIVATION SCREEN ===== -->
+<div id="claude-screen">
+  <div id="claude-top-bar">
+    <span>⭐ فعّل Claude الأقوى</span>
+    <button id="claude-close-btn" onclick="closeClaudeScreen()">✕ إغلاق</button>
+  </div>
+  <div id="claude-content" style="padding:1.5rem;overflow-y:auto;flex:1">
+
+    <!-- Comparison -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1.2rem">
+      <div style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:14px;padding:1rem;text-align:center">
+        <div style="font-size:2rem">🆓</div>
+        <div style="font-weight:900;color:#2ecc71;margin:0.3rem 0">Gemini</div>
+        <div style="font-size:0.72rem;color:#aaa">مجاني • كويس</div>
+        <div style="font-size:0.7rem;color:#888;margin-top:0.5rem;line-height:1.5">تشخيص جيد<br>شات عادي</div>
+      </div>
+      <div style="background:rgba(155,89,182,0.15);border:2px solid rgba(155,89,182,0.5);border-radius:14px;padding:1rem;text-align:center">
+        <div style="font-size:2rem">⭐</div>
+        <div style="font-weight:900;color:#c39bd3;margin:0.3rem 0">Claude</div>
+        <div style="font-size:0.72rem;color:#f1c40f">الأقوى • الأدق</div>
+        <div style="font-size:0.7rem;color:#c39bd3;margin-top:0.5rem;line-height:1.5">تشخيص احترافي<br>شات خبير حقيقي</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:0.9rem;margin-bottom:1.2rem;font-size:0.78rem;color:#c39bd3;line-height:1.8">
+      ✅ تشخيص صور أدق بكتير<br>
+      ✅ علاجات طبيعية وكيميائية مفصلة<br>
+      ✅ خطط علاج أسبوعية<br>
+      ✅ شات د. نبات الخبير<br>
+      🎁 <strong style="color:#f1c40f">أول 5 دولار مجاناً من Anthropic!</strong>
+    </div>
+
+    <a href="https://console.anthropic.com" target="_blank" style="display:block;background:linear-gradient(135deg,#8e44ad,#9b59b6);color:#fff;border-radius:12px;padding:0.8rem;text-align:center;font-family:'Cairo',sans-serif;font-weight:900;font-size:0.9rem;text-decoration:none;margin-bottom:1rem">
+      🚀 احصل على API Key من Anthropic
+    </a>
+
+    <input type="password" id="claude-key-input" placeholder="sk-ant-api..." style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(155,89,182,0.4);color:#fff;padding:0.85rem 1rem;border-radius:12px;font-family:'Cairo',sans-serif;font-size:0.85rem;outline:none;direction:ltr;text-align:left;margin-bottom:0.8rem;box-sizing:border-box">
+
+    <button onclick="saveClaudeKey()" style="width:100%;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;border:none;border-radius:12px;padding:0.9rem;font-family:'Cairo',sans-serif;font-weight:900;font-size:0.95rem;cursor:pointer;margin-bottom:0.5rem">
+      ✅ فعّل Claude — ابدأ تشخيص أقوى
+    </button>
+    <button onclick="closeClaudeScreen()" style="width:100%;background:transparent;color:#666;border:none;font-family:'Cairo',sans-serif;font-size:0.78rem;cursor:pointer;padding:0.4rem">
+      لا شكراً، سأكمل مع Gemini المجاني
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
