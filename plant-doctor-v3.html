@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>طبيب النبات 🌿 v3 - تشخيص أمراض النباتات بالذكاء الاصطناعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green-deep: #061a0e;
+  --green-dark: #0f3d20;
+  --green-mid: #1e7a3a;
+  --green-light: #2ecc71;
+  --green-soft: #a8e6bf;
+  --gold: #f9a825;
+  --white: #f0fff4;
+  --text: #0a2010;
+  --muted: #4a7a5a;
+  --card-bg: rgba(255,255,255,0.97);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Cairo', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+/* BG */
+.bg-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.leaf { position: absolute; font-size: var(--s,1.5rem); opacity: 0.06; animation: floatLeaf var(--d,8s) ease-in-out infinite; animation-delay: var(--delay,0s); }
+@keyframes floatLeaf { 0%,100%{transform:translateY(0) rotate(0deg);opacity:0.06} 50%{transform:translateY(-25px) rotate(12deg);opacity:0.12} }
+
+/* APP */
+.app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; min-height: 100vh; background: linear-gradient(180deg,#061a0e 0%,#0d2e18 100%); display: flex; flex-direction: column; }
+
+/* HEADER */
+.header { background: linear-gradient(135deg,#061a0e,#0f3d20); padding: 1rem 1.5rem 0.8rem; text-align: center; border-bottom: 1px solid rgba(46,204,113,0.15); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.4); }
+.header-logo { font-size: 2.2rem; line-height: 1; margin-bottom: 0.2rem; }
+.header h1 { font-size: 1.2rem; font-weight: 900; color: #fff; }
+.header p { font-size: 0.72rem; color: var(--green-soft); margin-top: 0.1rem; }
+.version-badge { display: inline-block; background: rgba(46,204,113,0.2); border: 1px solid rgba(46,204,113,0.4); color: var(--green-light); font-size: 0.65rem; padding: 0.1rem 0.5rem; border-radius: 999px; margin-top: 0.2rem; }
+
+/* NAV */
+.nav-tabs { display: flex; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(46,204,113,0.1); overflow-x: auto; scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab { flex-shrink: 0; padding: 0.7rem 0.8rem; text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); cursor: pointer; border: none; background: transparent; font-family: 'Cairo', sans-serif; transition: all 0.25s; border-bottom: 3px solid transparent; white-space: nowrap; }
+.nav-tab.active { color: var(--green-light); border-bottom-color: var(--green-light); background: rgba(46,204,113,0.07); }
+
+/* SCREENS */
+.screen { display: none; flex: 1; padding: 1rem; animation: fadeUp 0.35s ease; }
+.screen.active { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+/* ===== SCAN SCREEN ===== */
+.scan-hero { background: linear-gradient(135deg,#0f3d20,#1e7a3a); border-radius: 18px; padding: 1.3rem; margin-bottom: 1rem; text-align: center; border: 1px solid rgba(46,204,113,0.25); position: relative; overflow: hidden; }
+.scan-hero::before { content:''; position:absolute; top:-30px; left:-30px; width:100px; height:100px; background:radial-gradient(circle,rgba(46,204,113,0.2),transparent); border-radius:50%; }
+.microscope-scientist { font-size: 4rem; display: block; margin-bottom: 0.5rem; animation: scientist 3s ease-in-out infinite; cursor: pointer; }
+@keyframes scientist { 0%,100%{transform:rotate(-3deg) scale(1)} 25%{transform:rotate(3deg) scale(1.05)} 50%{transform:rotate(-2deg) scale(1.02)} 75%{transform:rotate(2deg) scale(1.04)} }
+.scan-hero h2 { font-size: 1.1rem; font-weight: 900; color: #fff; margin-bottom: 0.3rem; }
+.scan-hero p { font-size: 0.78rem; color: var(--green-soft); line-height: 1.5; }
+
+/* Search bar */
+.voice-search-wrap { position: relative; margin-bottom: 1rem; }
+.voice-search-wrap input { width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(46,204,113,0.3); color:#fff; padding:0.75rem 3rem 0.75rem 1rem; border-radius:12px; font-size:0.88rem; font-family:'Cairo',sans-serif; outline:none; }
+.voice-search-wrap input::placeholder { color:var(--muted); }
+.voice-btn { position:absolute; left:0.7rem; top:50%; transform:translateY(-50%); background:var(--green-mid); border:none; border-radius:8px; padding:0.3rem 0.5rem; cursor:pointer; font-size:1rem; transition:all 0.2s; }
+.voice-btn:hover { background:var(--green-light); }
+.voice-btn.listening { background:#e74c3c; animation:pulse 0.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:translateY(-50%) scale(1)} 50%{transform:translateY(-50%) scale(1.1)} }
+
+/* Upload */
+.upload-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem; }
+.camera-btn { background:linear-gradient(135deg,#f9a825,#e67e22); color:white; border:none; padding:1rem; border-radius:14px; font-size:0.9rem; font-weight:900; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 15px rgba(249,168,37,0.3); display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+.camera-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(249,168,37,0.4); }
+.upload-btn { background:linear-gradient(135deg,#1e7a3a,#2ecc71); color:white; border:none; padding:1rem; border-radius:14px; font-size:0.9rem; font-weight:900; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 15px rgba(46,204,113,0.3); display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+.upload-btn:hover { transform:translateY(-2px); }
+
+/* Preview */
+#preview-container { display:none; margin-bottom:1rem; border-radius:14px; overflow:hidden; border:2px solid var(--green-mid); position:relative; }
+#preview-img { width:100%; max-height:220px; object-fit:cover; display:block; }
+.preview-overlay { position:absolute; top:0.6rem; left:0.6rem; background:rgba(6,26,14,0.85); color:var(--green-soft); font-size:0.72rem; padding:0.25rem 0.6rem; border-radius:999px; }
+
+/* Analyze btn */
+.btn-analyze { width:100%; background:linear-gradient(135deg,var(--green-mid),var(--green-light)); color:white; border:none; padding:1rem; border-radius:14px; font-size:1rem; font-weight:900; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 20px rgba(46,204,113,0.3); display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.8rem; }
+.btn-analyze:hover { transform:translateY(-2px); }
+
+/* Loading */
+.loading-box { display:none; text-align:center; padding:2rem; background:rgba(46,204,113,0.05); border-radius:16px; border:1px solid rgba(46,204,113,0.15); margin-bottom:1rem; }
+.spinner { width:50px; height:50px; border:4px solid rgba(46,204,113,0.15); border-top-color:var(--green-light); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-scientist { font-size:3rem; animation:scientist 1s ease-in-out infinite; display:block; margin-bottom:0.5rem; }
+.loading-box p { color:var(--green-soft); font-size:0.88rem; }
+
+/* Result */
+#result-box { display:none; animation:fadeUp 0.5s ease; }
+.result-header { background:linear-gradient(135deg,#0f3d20,#1e7a3a); border-radius:16px 16px 0 0; padding:1.2rem; display:flex; align-items:center; gap:1rem; }
+.result-emoji { font-size:2.5rem; }
+.result-title { flex:1; }
+.result-title h3 { font-size:1rem; font-weight:900; color:#fff; }
+.result-title span { font-size:0.75rem; color:var(--green-soft); }
+.result-badge { padding:0.25rem 0.7rem; border-radius:999px; font-size:0.72rem; font-weight:700; }
+.badge-danger { background:rgba(231,76,60,0.2); color:#ff6b6b; border:1px solid rgba(231,76,60,0.3); }
+.badge-warning { background:rgba(241,196,15,0.2); color:#f1c40f; border:1px solid rgba(241,196,15,0.3); }
+.badge-success { background:rgba(46,204,113,0.2); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); }
+.result-body { background:var(--card-bg); border-radius:0 0 16px 16px; padding:1.2rem; margin-bottom:1rem; }
+.result-section { margin-bottom:0.9rem; padding-bottom:0.9rem; border-bottom:1px solid #e8f5e9; }
+.result-section:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.result-section h4 { font-size:0.82rem; font-weight:900; color:var(--green-dark); margin-bottom:0.4rem; display:flex; align-items:center; gap:0.3rem; }
+.result-section p, .result-section li { font-size:0.82rem; color:#444; line-height:1.7; }
+.result-section ul { padding-right:1rem; }
+.result-section li { margin-bottom:0.25rem; }
+.confidence-bar { height:7px; background:#e8f5e9; border-radius:999px; overflow:hidden; margin-top:0.4rem; }
+.confidence-fill { height:100%; background:linear-gradient(90deg,var(--green-mid),var(--green-light)); border-radius:999px; transition:width 1s ease; width:0%; }
+.btn-secondary { width:100%; background:transparent; color:var(--green-light); border:2px solid rgba(46,204,113,0.4); padding:0.8rem; border-radius:14px; font-size:0.88rem; font-weight:700; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.3s; }
+.btn-secondary:hover { border-color:var(--green-light); background:rgba(46,204,113,0.1); }
+
+/* Offline indicator */
+.offline-badge { display:none; background:#e74c3c; color:#fff; text-align:center; padding:0.4rem; font-size:0.78rem; font-weight:700; }
+.online-badge { display:none; background:#2ecc71; color:#fff; text-align:center; padding:0.4rem; font-size:0.78rem; font-weight:700; }
+
+/* ===== DISEASES SCREEN ===== */
+.search-bar { position:relative; margin-bottom:0.8rem; }
+.search-bar input { width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(46,204,113,0.3); color:#fff; padding:0.75rem 1rem 0.75rem 3rem; border-radius:12px; font-size:0.85rem; font-family:'Cairo',sans-serif; outline:none; }
+.search-bar input::placeholder { color:var(--muted); }
+.search-icon { position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:1rem; }
+.search-voice-btn { position:absolute; right:0.7rem; top:50%; transform:translateY(-50%); background:var(--green-mid); border:none; border-radius:8px; padding:0.3rem 0.5rem; cursor:pointer; font-size:0.9rem; }
+
+.filter-chips { display:flex; gap:0.5rem; overflow-x:auto; padding-bottom:0.5rem; margin-bottom:0.8rem; scrollbar-width:none; }
+.filter-chips::-webkit-scrollbar { display:none; }
+.chip { flex-shrink:0; padding:0.35rem 0.9rem; border-radius:999px; font-size:0.75rem; font-weight:700; border:1px solid rgba(46,204,113,0.3); color:var(--green-soft); cursor:pointer; transition:all 0.25s; white-space:nowrap; font-family:'Cairo',sans-serif; background:transparent; }
+.chip.active,.chip:hover { background:var(--green-mid); border-color:var(--green-mid); color:white; }
+
+.disease-grid { display:flex; flex-direction:column; gap:0.7rem; }
+.disease-card { background:var(--card-bg); border-radius:14px; overflow:hidden; cursor:pointer; transition:all 0.25s; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+.disease-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.12); }
+.dc-header { background:linear-gradient(135deg,#0f3d20,#1e7a3a); padding:0.75rem 1rem; display:flex; align-items:center; justify-content:space-between; }
+.dc-header h3 { font-size:0.9rem; font-weight:900; color:#fff; }
+.dc-body { padding:0.9rem; }
+.dc-body p { font-size:0.78rem; color:#555; line-height:1.6; }
+.dc-meta { display:flex; gap:0.4rem; margin-top:0.6rem; flex-wrap:wrap; }
+.dc-tag { padding:0.2rem 0.55rem; border-radius:999px; font-size:0.68rem; font-weight:700; }
+.tag-plant { background:#e8f5e9; color:#2e7d32; }
+.tag-type { background:#fff3e0; color:#e65100; }
+.tag-season { background:#e3f2fd; color:#1565c0; }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal-sheet { background:#fff; border-radius:22px 22px 0 0; width:100%; max-height:88vh; overflow-y:auto; animation:slideUp 0.3s ease; padding:1.5rem; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-handle { width:38px; height:4px; background:#ddd; border-radius:999px; margin:0 auto 1.2rem; }
+.modal-title { font-size:1.2rem; font-weight:900; color:var(--green-dark); margin-bottom:0.2rem; }
+.modal-subtitle { font-size:0.82rem; color:var(--muted); margin-bottom:1rem; }
+.modal-section { margin-bottom:1rem; }
+.modal-section h4 { font-size:0.85rem; font-weight:900; color:var(--green-dark); margin-bottom:0.4rem; padding-bottom:0.25rem; border-bottom:2px solid #e8f5e9; }
+.modal-section p, .modal-section li { font-size:0.82rem; color:#444; line-height:1.7; }
+.modal-section ul { padding-right:1.2rem; }
+.modal-section li { margin-bottom:0.25rem; }
+.severity-indicator { display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.7rem; border-radius:999px; font-size:0.75rem; font-weight:700; margin-bottom:0.8rem; }
+.sev-high { background:#ffebee; color:#c62828; }
+.sev-med { background:#fff8e1; color:#f57f17; }
+.sev-low { background:#e8f5e9; color:#2e7d32; }
+
+/* ===== PLANTS SCREEN ===== */
+.plants-search { position:relative; margin-bottom:0.8rem; }
+.plants-search input { width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(46,204,113,0.3); color:#fff; padding:0.75rem 1rem 0.75rem 3rem; border-radius:12px; font-size:0.85rem; font-family:'Cairo',sans-serif; outline:none; }
+.plants-search input::placeholder { color:var(--muted); }
+.plants-search .search-icon { position:absolute; left:1rem; top:50%; transform:translateY(-50%); }
+.plants-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; }
+.plant-mini-card { background:var(--card-bg); border-radius:14px; padding:1rem; text-align:center; cursor:pointer; transition:all 0.25s; box-shadow:0 2px 8px rgba(0,0,0,0.07); }
+.plant-mini-card:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,0.1); }
+.plant-mini-card .emoji { font-size:2.2rem; display:block; margin-bottom:0.4rem; }
+.plant-mini-card h3 { font-size:0.82rem; font-weight:900; color:var(--green-dark); margin-bottom:0.15rem; }
+.plant-mini-card p { font-size:0.68rem; color:var(--muted); }
+
+/* ===== CALENDAR SCREEN ===== */
+.calendar-wrap { background:var(--card-bg); border-radius:16px; overflow:hidden; margin-bottom:1rem; }
+.cal-header { background:linear-gradient(135deg,#0f3d20,#1e7a3a); padding:1rem; display:flex; align-items:center; justify-content:space-between; }
+.cal-header h3 { color:#fff; font-size:1rem; font-weight:900; }
+.cal-nav { background:rgba(255,255,255,0.2); border:none; color:#fff; padding:0.3rem 0.7rem; border-radius:8px; cursor:pointer; font-size:1rem; font-family:'Cairo',sans-serif; }
+.cal-months { display:grid; grid-template-columns:repeat(3,1fr); }
+.cal-month { padding:0.8rem 0.5rem; text-align:center; border:1px solid #e8f5e9; cursor:pointer; transition:all 0.2s; }
+.cal-month:hover,.cal-month.active { background:#e8f5e9; }
+.cal-month h4 { font-size:0.8rem; font-weight:900; color:var(--green-dark); margin-bottom:0.3rem; }
+.cal-month .crops { font-size:0.65rem; color:var(--muted); line-height:1.5; }
+.crop-tag { display:inline-block; background:#e8f5e9; color:#2e7d32; padding:0.15rem 0.4rem; border-radius:999px; font-size:0.62rem; margin:0.1rem; font-weight:700; }
+
+.season-card { background:var(--card-bg); border-radius:14px; padding:1rem; margin-bottom:0.7rem; border-right:4px solid; }
+.season-spring { border-color:#4caf50; }
+.season-summer { border-color:#ff9800; }
+.season-autumn { border-color:#795548; }
+.season-winter { border-color:#2196f3; }
+.season-card h4 { font-size:0.9rem; font-weight:900; color:var(--green-dark); margin-bottom:0.5rem; }
+.season-card p { font-size:0.78rem; color:#555; line-height:1.6; }
+
+/* ===== TIPS SCREEN ===== */
+.tip-card { background:var(--card-bg); border-radius:14px; padding:1rem; margin-bottom:0.7rem; display:flex; gap:0.8rem; align-items:flex-start; }
+.tip-icon { font-size:1.8rem; flex-shrink:0; }
+.tip-content h4 { font-size:0.85rem; font-weight:900; color:var(--green-dark); margin-bottom:0.25rem; }
+.tip-content p { font-size:0.78rem; color:#555; line-height:1.6; }
+
+/* Section title */
+.section-title { font-size:0.95rem; font-weight:900; color:var(--green-soft); margin-bottom:0.7rem; display:flex; align-items:center; gap:0.5rem; }
+.section-title::after { content:''; flex:1; height:1px; background:rgba(46,204,113,0.15); }
+.guide-step{display:flex;gap:0.8rem;align-items:flex-start;padding:0.7rem 0;border-bottom:1px solid #f0f0f0}
+.guide-step:last-child{border-bottom:none}
+.guide-num{min-width:26px;height:26px;background:linear-gradient(135deg,#1e7a3a,#2ecc71);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;flex-shrink:0;margin-top:2px}
+.guide-step strong{font-size:0.85rem;color:var(--green-dark);display:block;margin-bottom:0.2rem}
+.guide-step p{font-size:0.75rem;color:#666;line-height:1.5;margin:0}
+
+/* Connection status */
+#connection-status { text-align:center; padding:0.4rem; font-size:0.75rem; font-weight:700; transition:all 0.3s; }
+.status-online { background:rgba(46,204,113,0.15); color:var(--green-light); }
+.status-offline { background:rgba(231,76,60,0.15); color:#ff6b6b; }
+
+/* ===== CHAT ===== */
+.chat-hero{background:linear-gradient(135deg,#0f3d20,#1a5c30);border-radius:18px;padding:1.2rem;margin-bottom:0.9rem;text-align:center;border:1px solid rgba(46,204,113,0.25)}
+.chat-hero h2{font-size:1.05rem;font-weight:900;color:#fff;margin:0.3rem 0 0.2rem}
+.chat-hero p{font-size:0.76rem;color:var(--green-soft)}
+.quick-q{background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);color:var(--green-soft);padding:0.35rem 0.7rem;border-radius:999px;font-size:0.72rem;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.quick-q:hover{background:rgba(46,204,113,0.22);color:#fff;border-color:var(--green-light)}
+#chat-messages{display:flex;flex-direction:column;gap:0.7rem;margin-bottom:0.9rem;min-height:60px}
+.msg{max-width:88%;padding:0.75rem 1rem;border-radius:16px;font-size:0.82rem;line-height:1.65;animation:fadeUp 0.25s ease}
+.msg-user{align-self:flex-end;background:linear-gradient(135deg,#1e7a3a,#27ae60);color:#fff;border-bottom-left-radius:4px}
+.msg-bot{align-self:flex-start;background:var(--card-bg);color:var(--text);border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.msg-bot strong{color:var(--green-dark)}
+.msg-typing{align-self:flex-start;background:var(--card-bg);color:#aaa;padding:0.75rem 1rem;border-radius:16px;border-bottom-right-radius:4px;font-size:0.82rem}
+.msg-typing span{display:inline-block;animation:blink 1s infinite}
+.msg-typing span:nth-child(2){animation-delay:.2s}
+.msg-typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.chat-input-wrap{display:flex;gap:0.5rem;position:sticky;bottom:0;background:linear-gradient(0deg,#061a0e 70%,transparent);padding:0.7rem 0 0.3rem}
+.chat-input-wrap input{flex:1;background:rgba(255,255,255,0.1);border:1px solid rgba(46,204,113,0.35);color:#fff;padding:0.75rem 1rem;border-radius:12px;font-size:0.85rem;font-family:'Cairo',sans-serif;outline:none;transition:border 0.2s}
+.chat-input-wrap input:focus{border-color:var(--green-light)}
+.chat-input-wrap input::placeholder{color:rgba(255,255,255,0.35)}
+#chat-send-btn{background:linear-gradient(135deg,#1e7a3a,#2ecc71);border:none;border-radius:12px;width:46px;height:46px;cursor:pointer;font-size:1.2rem;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+#chat-send-btn:disabled{opacity:0.5;cursor:default}
+.btn-voice-symptoms{background:linear-gradient(135deg,#1a3a6e,#2980b9);color:#fff;border:none;border-radius:12px;padding:0.7rem 1.4rem;font-family:'Cairo',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:0.4rem}
+.btn-voice-symptoms.listening{background:linear-gradient(135deg,#7b1a1a,#e74c3c);animation:pulse2 0.7s ease-in-out infinite}
+@keyframes pulse2{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+</style>
+</head>
+<body>
+<div class="bg-canvas" id="bgCanvas"></div>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">🌿</div>
+    <h1>طبيب النبات</h1>
+    <p>تشخيص أمراض النباتات بالذكاء الاصطناعي</p>
+    <span class="version-badge">✨ الإصدار 3.0</span>
+    <div style="display:flex;justify-content:center;gap:1.4rem;margin-top:0.6rem;">
+      <div style="text-align:center"><div style="font-size:1.05rem;font-weight:900;color:var(--green-light)" id="stat-diag">0</div><div style="font-size:0.58rem;color:var(--green-soft)">تشخيص</div></div>
+      <div style="text-align:center"><div style="font-size:1.05rem;font-weight:900;color:var(--gold)" id="stat-pts">0</div><div style="font-size:0.58rem;color:var(--green-soft)">نقطة 🏆</div></div>
+      <div style="text-align:center"><div style="font-size:1.05rem;font-weight:900;color:#e74c3c" id="stat-sick">0</div><div style="font-size:0.58rem;color:var(--green-soft)">مريضة 🔴</div></div>
+      <div style="text-align:center"><div style="font-size:1.05rem;font-weight:900;color:#2ecc71" id="stat-healthy">0</div><div style="font-size:0.58rem;color:var(--green-soft)">سليمة ✅</div></div>
+    </div>
+  </div>
+
+  <!-- Connection status -->
+  <div id="connection-status" class="status-online">🟢 متصل بالإنترنت - الذكاء الاصطناعي جاهز</div>
+
+  <!-- Nav -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showScreen('scan',this)">🔬 تشخيص</button>
+    <button class="nav-tab" onclick="showScreen('diseases',this)">🦠 الأمراض</button>
+    <button class="nav-tab" onclick="showScreen('plants',this)">🌱 النباتات</button>
+    <button class="nav-tab" onclick="showScreen('calendar',this)">📅 التقويم</button>
+    <button class="nav-tab" onclick="showScreen('tips',this)">💡 نصائح</button>
+    <button class="nav-tab" onclick="showScreen('compare',this)">📊 مقارنة</button>
+    <button class="nav-tab" onclick="showScreen('guide',this)">📖 دليل</button>
+    <button class="nav-tab" onclick="showScreen('chat',this)">💬 اسأل</button>
+  </div>
+
+  <!-- ===== SCAN ===== -->
+  <div class="screen active" id="screen-scan">
+    <div class="scan-hero">
+      <span class="microscope-scientist" id="scientist-emoji" title="اضغط لتغيير العالم">🧑‍🔬</span>
+      <h2>العالم جاهز للتشخيص! 🔬</h2>
+      <p>صوّر النبتة المريضة وسيشخّصها الذكاء الاصطناعي فوراً</p>
+    </div>
+
+    <!-- Voice search -->
+    <div class="voice-search-wrap">
+      <input type="text" id="voice-search-input" placeholder="ابحث عن مرض أو نبتة... أو اضغط 🎤" oninput="voiceSearchFilter()">
+      <button class="voice-btn" id="voice-btn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
+    </div>
+    <div id="voice-search-results" style="display:none;background:var(--card-bg);border-radius:12px;padding:0.8rem;margin-bottom:0.8rem;"></div>
+
+    <!-- Camera & Upload -->
+    <div class="upload-btns">
+      <button class="camera-btn" onclick="document.getElementById('camera-input').click()">📸 كاميرا</button>
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">📁 معرض</button>
+    </div>
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handleImage(event)">
+    <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleImage(event)">
+
+    <!-- Voice symptoms -->
+    <div style="text-align:center;margin:0.6rem 0">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem">— أو اوصف الأعراض بدون صورة —</div>
+      <button class="btn-voice-symptoms" id="voice-sym-btn" onclick="startSymptomVoice()">🎤 صف الأعراض بصوتك</button>
+    </div>
+    <div id="symptom-text-wrap" style="display:none;margin-bottom:0.6rem">
+      <textarea id="symptom-textarea" placeholder="أو اكتب الأعراض هنا: مثلاً — أوراق الطماطم اصفرت وظهرت بقع بنية عليها..." style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(46,204,113,0.3);color:#fff;padding:0.8rem;border-radius:12px;font-family:'Cairo',sans-serif;font-size:0.85rem;resize:none;height:90px;outline:none"></textarea>
+      <button class="btn-analyze" onclick="analyzeSymptoms()" style="display:flex;margin-top:0.5rem">🤖 تشخيص من الوصف</button>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-container">
+      <img id="preview-img" src="" alt="صورة النبتة">
+      <div class="preview-overlay">✅ الصورة جاهزة للتحليل</div>
+    </div>
+
+    <!-- Analyze -->
+    <button class="btn-analyze" id="analyze-btn" onclick="analyzeImage()" style="display:none">
+      🤖 تشخيص بالذكاء الاصطناعي
+    </button>
+
+    <!-- Loading -->
+    <div class="loading-box" id="loading-box">
+      <span class="loading-scientist">🧑‍🔬</span>
+      <div class="spinner"></div>
+      <p>العالم يفحص النبتة بالمجهر...</p>
+      <p style="font-size:0.72rem;margin-top:0.3rem;opacity:0.7">الذكاء الاصطناعي يحلل الصورة</p>
+    </div>
+
+    <!-- Result -->
+    <div id="result-box">
+      <div id="result-content"></div>
+      <button class="btn-secondary" onclick="resetScan()">🔄 تشخيص نبتة أخرى</button>
+    </div>
+  </div>
+
+  <!-- ===== DISEASES ===== -->
+  <div class="screen" id="screen-diseases">
+    <div class="section-title">🦠 قاعدة بيانات الأمراض</div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="ابحث عن مرض..." id="disease-search" oninput="filterDiseases()">
+      <button class="search-voice-btn" onclick="startDiseaseVoice()">🎤</button>
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" onclick="filterByType('all',this)">الكل</button>
+      <button class="chip" onclick="filterByType('فطري',this)">🍄 فطري</button>
+      <button class="chip" onclick="filterByType('بكتيري',this)">🦠 بكتيري</button>
+      <button class="chip" onclick="filterByType('فيروسي',this)">🔴 فيروسي</button>
+      <button class="chip" onclick="filterByType('حشري',this)">🐛 حشري</button>
+      <button class="chip" onclick="filterByType('غذائي',this)">🌿 غذائي</button>
+    </div>
+    <div class="disease-grid" id="disease-grid"></div>
+  </div>
+
+  <!-- ===== PLANTS ===== -->
+  <div class="screen" id="screen-plants">
+    <div class="section-title">🌱 موسوعة النباتات</div>
+    <div class="plants-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="ابحث عن نبتة..." id="plants-search-input" oninput="filterPlants()">
+    </div>
+    <div class="plants-grid" id="plants-grid"></div>
+  </div>
+
+  <!-- ===== CALENDAR ===== -->
+  <div class="screen" id="screen-calendar">
+    <div class="section-title">📅 تقويم مواعيد الزراعة</div>
+
+    <div class="calendar-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeYear(-1)">◀</button>
+        <h3 id="cal-year">2025</h3>
+        <button class="cal-nav" onclick="changeYear(1)">▶</button>
+      </div>
+      <div class="cal-months" id="cal-months"></div>
+    </div>
+
+    <div class="section-title">🌸 مواسم الزراعة</div>
+    <div class="season-card season-spring">
+      <h4>🌸 الربيع (مارس - مايو)</h4>
+      <p>أفضل وقت لزراعة: الطماطم 🍅، الخيار 🥒، الفلفل 🫑، الباذنجان 🍆، الكوسة، البطيخ 🍉، الشمام، الفاصولياء 🫘، الذرة 🌽</p>
+    </div>
+    <div class="season-card season-summer">
+      <h4>☀️ الصيف (يونيو - أغسطس)</h4>
+      <p>مناسب لزراعة: البامية 🌿، العنب 🍇، الفول السوداني، السمسم، القطن، البطاطا الحلوة</p>
+    </div>
+    <div class="season-card season-autumn">
+      <h4>🍂 الخريف (سبتمبر - نوفمبر)</h4>
+      <p>موسم زراعة: الجزر 🥕، البصل 🧅، الثوم 🧄، السبانخ 🥬، الخس، البروكلي 🥦، القرنبيط، الفجل</p>
+    </div>
+    <div class="season-card season-winter">
+      <h4>❄️ الشتاء (ديسمبر - فبراير)</h4>
+      <p>زراعة: الفول 🫘، البازلاء، الكرنب 🥗، الجرجير، البقدونس، الكزبرة، الشبت، الفراولة 🍓</p>
+    </div>
+  </div>
+
+  <!-- ===== TIPS ===== -->
+  <div class="screen" id="screen-tips">
+    <div class="section-title">💡 نصائح الزراعة والوقاية</div>
+    <div id="tips-list"></div>
+  </div>
+</div>
+
+  <!-- ===== COMPARE ===== -->
+  <div class="screen" id="screen-compare">
+    <div class="section-title">📊 مقارنة صور النبات</div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">قارن صورة النبتة قبل العلاج وبعده لترى التحسن 🌱</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem;">
+      <div style="background:var(--card-bg);border-radius:14px;overflow:hidden;border:2px dashed rgba(46,204,113,0.4)">
+        <div style="padding:0.6rem;text-align:center;background:rgba(231,76,60,0.1);font-size:0.75rem;font-weight:900;color:#c0392b">قبل العلاج 🔴</div>
+        <div id="before-preview" style="height:140px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9" onclick="document.getElementById('before-input').click()">
+          <div style="text-align:center;color:#aaa"><div style="font-size:2rem">📸</div><div style="font-size:0.7rem;margin-top:0.3rem">اضغط لرفع صورة</div></div>
+        </div>
+        <input type="file" id="before-input" accept="image/*" style="display:none" onchange="loadCompareImg('before',event)">
+      </div>
+      <div style="background:var(--card-bg);border-radius:14px;overflow:hidden;border:2px dashed rgba(46,204,113,0.4)">
+        <div style="padding:0.6rem;text-align:center;background:rgba(46,204,113,0.1);font-size:0.75rem;font-weight:900;color:#1e7a3a">بعد العلاج ✅</div>
+        <div id="after-preview" style="height:140px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9" onclick="document.getElementById('after-input').click()">
+          <div style="text-align:center;color:#aaa"><div style="font-size:2rem">📸</div><div style="font-size:0.7rem;margin-top:0.3rem">اضغط لرفع صورة</div></div>
+        </div>
+        <input type="file" id="after-input" accept="image/*" style="display:none" onchange="loadCompareImg('after',event)">
+      </div>
+    </div>
+
+    <div id="compare-note" style="display:none;background:var(--card-bg);border-radius:12px;padding:1rem;margin-bottom:1rem">
+      <textarea id="compare-text" placeholder="اكتب ملاحظاتك عن التحسن..." style="width:100%;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:0.7rem;font-family:'Cairo',sans-serif;font-size:0.82rem;resize:none;height:80px;outline:none"></textarea>
+      <button onclick="saveCompare()" style="width:100%;margin-top:0.5rem;background:var(--green-mid);color:#fff;border:none;border-radius:10px;padding:0.7rem;font-family:'Cairo',sans-serif;font-weight:700;cursor:pointer">💾 حفظ المقارنة</button>
+    </div>
+
+    <div class="section-title" style="margin-top:1rem">📈 إحصائياتك</div>
+    <div style="background:var(--card-bg);border-radius:14px;padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;" id="stats-grid">
+      <div style="text-align:center;padding:0.8rem;background:#f0fff4;border-radius:12px;border:1px solid #c8e6c9">
+        <div style="font-size:1.8rem;font-weight:900;color:var(--green-mid)" id="big-diag">0</div>
+        <div style="font-size:0.72rem;color:#555">إجمالي التشخيصات</div>
+      </div>
+      <div style="text-align:center;padding:0.8rem;background:#fff8e1;border-radius:12px;border:1px solid #ffe082">
+        <div style="font-size:1.8rem;font-weight:900;color:#f9a825" id="big-pts">0</div>
+        <div style="font-size:0.72rem;color:#555">نقاطك 🏆</div>
+      </div>
+      <div style="text-align:center;padding:0.8rem;background:#fce4ec;border-radius:12px;border:1px solid #f8bbd0">
+        <div style="font-size:1.8rem;font-weight:900;color:#c62828" id="big-sick">0</div>
+        <div style="font-size:0.72rem;color:#555">نبات مريض</div>
+      </div>
+      <div style="text-align:center;padding:0.8rem;background:#e8f5e9;border-radius:12px;border:1px solid #a5d6a7">
+        <div style="font-size:1.8rem;font-weight:900;color:#2e7d32" id="big-healthy">0</div>
+        <div style="font-size:0.72rem;color:#555">نبات سليم</div>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem;background:var(--card-bg);border-radius:14px;padding:1rem">
+      <div style="font-size:0.85rem;font-weight:900;color:var(--green-dark);margin-bottom:0.7rem">🏆 مستواك كمزارع</div>
+      <div id="farmer-level" style="text-align:center;padding:1rem">
+        <div style="font-size:2.5rem" id="level-emoji">🌱</div>
+        <div style="font-size:1rem;font-weight:900;color:var(--green-dark);margin-top:0.3rem" id="level-title">مزارع مبتدئ</div>
+        <div style="font-size:0.75rem;color:#888;margin-top:0.2rem" id="level-desc">شخّص 5 نباتات للترقي للمستوى التالي</div>
+        <div style="background:#e8f5e9;border-radius:999px;height:8px;margin-top:0.8rem;overflow:hidden">
+          <div id="level-bar" style="height:100%;background:linear-gradient(90deg,#27ae60,#2ecc71);border-radius:999px;transition:width 0.5s;width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GUIDE ===== -->
+  <div class="screen" id="screen-guide">
+    <div class="section-title">📖 دليل المزارع الذكي</div>
+
+    <div style="background:var(--card-bg);border-radius:14px;overflow:hidden;margin-bottom:0.8rem">
+      <div style="background:linear-gradient(135deg,#1e7a3a,#27ae60);padding:1rem;color:#fff;text-align:center">
+        <div style="font-size:2.5rem">🌿</div>
+        <div style="font-weight:900;font-size:1rem;margin-top:0.3rem">كيف تستخدم التطبيق؟</div>
+      </div>
+      <div style="padding:1rem">
+        <div class="guide-step"><span class="guide-num">1</span><div><strong>التقاط صورة</strong><p>صوّر الجزء المريض من النبتة بوضوح في ضوء كافٍ</p></div></div>
+        <div class="guide-step"><span class="guide-num">2</span><div><strong>رفع الصورة</strong><p>استخدم الكاميرا المباشرة أو اختر من معرض الصور</p></div></div>
+        <div class="guide-step"><span class="guide-num">3</span><div><strong>التشخيص بالذكاء الاصطناعي</strong><p>اضغط زر التشخيص وانتظر النتيجة خلال ثوانٍ</p></div></div>
+        <div class="guide-step"><span class="guide-num">4</span><div><strong>العلاج</strong><p>اتبع خطوات العلاج المقترحة ووثّق التحسن في قسم المقارنة</p></div></div>
+      </div>
+    </div>
+
+    <div class="section-title">🔬 أنواع الأمراض</div>
+    <div id="disease-types-list" style="display:grid;gap:0.6rem;margin-bottom:0.8rem"></div>
+
+    <div class="section-title">🌡️ مؤشرات صحة النبات</div>
+    <div style="background:var(--card-bg);border-radius:14px;padding:1rem;margin-bottom:0.8rem" id="health-indicators"></div>
+
+    <div class="section-title">💧 جدول احتياجات الري</div>
+    <div style="background:var(--card-bg);border-radius:14px;overflow:hidden;margin-bottom:0.8rem" id="watering-table"></div>
+  </div>
+  <!-- ===== CHAT ===== -->
+  <div class="screen" id="screen-chat">
+    <div class="chat-hero">
+      <div style="font-size:3rem">🌿🤖</div>
+      <h2>خبير النباتات</h2>
+      <p>اسألني أي سؤال عن النباتات والزراعة!</p>
+    </div>
+
+    <!-- Quick questions -->
+    <div style="margin-bottom:0.8rem">
+      <div style="font-size:0.75rem;color:var(--green-soft);margin-bottom:0.5rem;font-weight:700">💡 أسئلة سريعة:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem" id="quick-qs">
+        <button class="quick-q" onclick="askQuick('كيف أزرع الطماطم خطوة بخطوة من البذرة للحصاد؟')">🍅 زراعة الطماطم</button>
+        <button class="quick-q" onclick="askQuick('ما أسباب اصفرار أوراق النباتات وكيف أعالجها؟')">🟡 اصفرار الأوراق</button>
+        <button class="quick-q" onclick="askQuick('كيف أتخلص من حشرة المن نهائياً بطرق طبيعية وكيميائية؟')">🐛 حشرة المن</button>
+        <button class="quick-q" onclick="askQuick('ما أفضل أنواع الأسمدة العضوية وكيف أستخدمها؟')">🌱 الأسمدة العضوية</button>
+        <button class="quick-q" onclick="askQuick('متى وكيف أروي نباتاتي بشكل صحيح؟')">💧 الري الصحيح</button>
+        <button class="quick-q" onclick="askQuick('كيف أحسن تربة الزراعة وأرفع خصوبتها؟')">🪱 تحسين التربة</button>
+        <button class="quick-q" onclick="askQuick('ما علامات نقص العناصر الغذائية في النبات وكيف أعالجها؟')">🔬 نقص العناصر</button>
+        <button class="quick-q" onclick="askQuick('كيف أزرع الأعشاب في المنزل بدون حديقة؟')">🏠 زراعة منزلية</button>
+        <button class="quick-q" onclick="askQuick('كيف أتخلص من الحشرات في الصوبة أو البيت المحمي؟')">🏭 الصوبة الزراعية</button>
+        <button class="quick-q" onclick="askQuick('كيف أزرع الخيار والكوسة وما أمراضهم الشائعة؟')">🥒 الخيار والكوسة</button>
+        <button class="quick-q" onclick="askQuick('ما هي الزراعة المائية الهيدروبونيك وكيف أبدأ فيها؟')">💦 هيدروبونيك</button>
+        <button class="quick-q" onclick="askQuick('كيف أصنع سماد الكمبوست في المنزل؟')">♻️ الكمبوست</button>
+      </div>
+    </div>
+
+    <!-- Chat messages -->
+    <div id="chat-messages"></div>
+
+    <!-- Input -->
+    <div class="chat-input-wrap">
+      <input type="text" id="chat-input" placeholder="اكتب سؤالك عن النباتات..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button id="chat-send-btn" onclick="sendChat()">
+        <span id="chat-send-icon">➤</span>
+      </button>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const diseases = [
+  { id:1, name:"البياض الدقيقي", nameEn:"Powdery Mildew", type:"فطري", plants:["الخيار","الكوسة","الفلفل","الطماطم","العنب","البطيخ"], season:"الربيع والصيف", severity:"متوسطة", emoji:"🍄", symptoms:"ظهور مسحوق أبيض يشبه الطحين على سطح الأوراق والسيقان. تصبح الأوراق صفراء ثم تجف وتسقط.", causes:"فطر Erysiphe cichoracearum. ينتشر في الطقس الدافئ الرطب مع ارتفاع الرطوبة.", treatment:["رش محلول بيكربونات الصوديوم (ملعقة كبيرة في لتر ماء)","استخدام مبيدات فطرية تحتوي على الكبريت","إزالة الأوراق المصابة وحرقها فوراً","رش زيت النيم المخفف مرة أسبوعياً"], prevention:["زراعة أصناف مقاومة","عدم الإفراط في الري","تجنب الري المسائي"] },
+  { id:2, name:"اللفحة المبكرة", nameEn:"Early Blight", type:"فطري", plants:["الطماطم","البطاطس","الباذنجان"], season:"الصيف والخريف", severity:"عالية", emoji:"🍂", symptoms:"بقع بنية داكنة دائرية على الأوراق السفلية تحاط بهالة صفراء.", causes:"فطر Alternaria solani في الطقس الحار الرطب.", treatment:["إزالة وحرق الأوراق المصابة","رش مبيد كلوروثالونيل","الرش بمحلول نحاسي","تجنب الري الرأسي"], prevention:["التناوب الزراعي كل 3 سنوات","استخدام بذور معقمة","تغطية التربة بالبلاستيك"] },
+  { id:3, name:"اللفحة المتأخرة", nameEn:"Late Blight", type:"فطري", plants:["الطماطم","البطاطس"], season:"الخريف والشتاء", severity:"عالية جداً", emoji:"💀", symptoms:"بقع مائية كبيرة على الأوراق تصبح بنية وتنتشر بسرعة. نمو أبيض قطني في الجهة السفلية.", causes:"فطر Phytophthora infestans في الطقس البارد الرطب.", treatment:["رش مبيد ريدوميل جولد فوراً","استخدام محاليل نحاسية","إزالة النباتات الشديدة الإصابة","رش وقائي كل 7 أيام"], prevention:["زراعة أصناف مقاومة","مراقبة الرطوبة","الرش الوقائي قبل موسم الخريف"] },
+  { id:4, name:"الذبول الفيوزاريومي", nameEn:"Fusarium Wilt", type:"فطري", plants:["الطماطم","الخيار","الفلفل","الباذنجان","البطيخ"], season:"طوال العام", severity:"عالية جداً", emoji:"🥀", symptoms:"اصفرار يبدأ من الأوراق السفلية ويصعد للأعلى. ذبول مفاجئ حتى في وجود الماء.", causes:"فطر Fusarium oxysporum في التربة.", treatment:["اقتلع النبات فوراً","تعقيم التربة بالشمس","رش Trichoderma بيولوجي","التطعيم على أصول مقاومة"], prevention:["بذور وشتلات معتمدة","تعقيم الأدوات","التناوب الزراعي 4-5 سنوات"] },
+  { id:5, name:"التبقع البكتيري", nameEn:"Bacterial Spot", type:"بكتيري", plants:["الطماطم","الفلفل"], season:"الصيف", severity:"متوسطة", emoji:"🦠", symptoms:"بقع صغيرة مائية على الأوراق تتحول لبنية محاطة بهالة صفراء.", causes:"بكتيريا Xanthomonas campestris تنتشر بالمطر والري.", treatment:["رش مبيد بكتيري نحاسي","إزالة الأوراق المصابة","مضاد حيوي زراعي بإشراف متخصص"], prevention:["بذور معاملة حرارياً","تجنب العمل بالحقل عند البلل","الرش النحاسي الوقائي"] },
+  { id:6, name:"فيروس موزاييك الخيار", nameEn:"Cucumber Mosaic Virus", type:"فيروسي", plants:["الخيار","الكوسة","الفلفل","الطماطم","البطيخ"], season:"الربيع والصيف", severity:"عالية", emoji:"🔴", symptoms:"تبرقش الأوراق بين الأخضر الفاتح والداكن. تشوه الأوراق وتجعدها. تقزم النبات.", causes:"فيروس CMV ينتقل بحشرات المن في ثوانٍ.", treatment:["اقتلع النبات المصاب","مكافحة المن بالإيميداكلوبريد","رش زيت معدني","العزل التام"], prevention:["أصناف مقاومة","مكافحة المن المستمرة","شباك ضد الحشرات في الصوب"] },
+  { id:7, name:"العفن الرمادي", nameEn:"Gray Mold", type:"فطري", plants:["الطماطم","الفراولة","العنب","الخيار","الفلفل"], season:"الشتاء والربيع", severity:"متوسطة", emoji:"🌫️", symptoms:"نمو رمادي كثيف على الأوراق والأزهار والثمار. تعفن الأنسجة وتلينها.", causes:"فطر Botrytis cinerea في الطقس البارد الرطب فوق 90% رطوبة.", treatment:["إزالة المصابة وحرقها","رش إيبروديون أو فنهيكسامايد","تحسين التهوية","رش بيكربونات البوتاسيوم"], prevention:["إزالة الأزهار الذابلة فوراً","تقليل الرطوبة في الصوب","تهوية جيدة صباحاً"] },
+  { id:8, name:"حفار ساق الذرة", nameEn:"Corn Borer", type:"حشري", plants:["الذرة","الذرة الرفيعة"], season:"الصيف", severity:"عالية", emoji:"🐛", symptoms:"ثقوب في الأوراق الحديثة. ثقوب في السيقان مع نشارة وبراز الحشرة. انكسار السيقان.", causes:"يرقات فراشة Ostrinia nubilalis.", treatment:["رش كلوربيريفوس أو سبينوساد","بكتيريا Bt بيولوجياً","إدخال دبور Trichogramma"], prevention:["حرق بقايا المحصول","الحراثة العميقة","الزراعة المبكرة"] },
+  { id:9, name:"عفن الجذر", nameEn:"Root Rot", type:"فطري", plants:["الطماطم","الخيار","الفاصولياء","البطاطس","جميع الخضروات"], season:"طوال العام", severity:"عالية", emoji:"🌱", symptoms:"اصفرار الأوراق السفلية وذبول رغم الري. تعفن الجذور وتحولها للبني أو الأسود.", causes:"فطريات Pythium وPhytophthora في التربة المشبعة بالماء.", treatment:["تقليل الري وتحسين الصرف","رش فوسيتيل ألومنيوم","إضافة Trichoderma للتربة","تهوية التربة"], prevention:["تحسين صرف التربة","عدم الإفراط في الري","رفع منطقة الزراعة"] },
+  { id:10, name:"حشرة المن", nameEn:"Aphids", type:"حشري", plants:["جميع النباتات تقريباً"], season:"الربيع والصيف", severity:"متوسطة", emoji:"🐜", symptoms:"تجمعات خضراء أو سوداء على الأفرع الحديثة. تجعد الأوراق. إفراز مادة لزجة عسلية.", causes:"حشرات المن تمتص عصارة النبات وتنقل الفيروسات.", treatment:["رش زيت النيم 2%","رش صابون البوتاسيوم","إيميداكلوبريد أو ثيامثوكسام","رش بماء قوي"], prevention:["إدخال الدعسوقة كعدو طبيعي","تجنب التسميد الآزوتي الزائد","الفحص الأسبوعي"] },
+  { id:11, name:"الصدأ", nameEn:"Rust", type:"فطري", plants:["الفول","الفاصولياء","القمح","الذرة"], season:"الخريف والشتاء", severity:"متوسطة", emoji:"🟤", symptoms:"بثرات صدئية برتقالية أو بنية على الأوراق. تتحول لمسحوق عند لمسها.", causes:"فطريات Puccinia تنتشر بالرياح والحشرات.", treatment:["مبيدات تريازول (تيبوكونازول)","مبيد مانكوزيب+زينيب","إزالة الشديدة الإصابة","الرش المبكر"], prevention:["أصناف مقاومة","التناوب الزراعي","حرق بقايا المحصول"] },
+  { id:12, name:"الحشرة القشرية", nameEn:"Scale Insects", type:"حشري", plants:["الحمضيات","التفاح","النخيل","الزيتون"], season:"طوال العام", severity:"متوسطة", emoji:"🔵", symptoms:"تجمعات جامدة على الأغصان تشبه القشور. اصفرار الأوراق. إفراز مادة عسلية لزجة.", causes:"حشرات قشرية تُفرز درعاً واقياً وتمتص العصارة.", treatment:["زيت معدني 3% في الشتاء","سبيرومسيفين أو بوبروفيزين","التنظيف اليدوي بفرشاة وكحول"], prevention:["فحص النباتات الجديدة","تقليم الأغصان الشديدة الإصابة","الري المنتظم"] },
+  { id:13, name:"اصفرار الأوراق (نقص الحديد)", nameEn:"Iron Deficiency", type:"غذائي", plants:["جميع النباتات"], season:"طوال العام", severity:"خفيفة", emoji:"🟡", symptoms:"اصفرار الأوراق الحديثة مع بقاء العروق خضراء. تقزم النمو وضعف الإنتاج.", causes:"نقص الحديد في التربة أو ارتفاع pH مما يمنع امتصاصه.", treatment:["رش كبريتات الحديد أو حديد EDDHA","تخفيض pH بإضافة الكبريت","إضافة سماد ميكروعناصر"], prevention:["تحليل التربة دورياً","تعديل pH التربة","التسميد المتوازن"] },
+  { id:14, name:"لفحة الشمس", nameEn:"Sunscald", type:"غذائي", plants:["الطماطم","الفلفل","الخيار"], season:"الصيف", severity:"خفيفة", emoji:"☀️", symptoms:"بقع بيضاء أو صفراء جافة على الجانب المعرض للشمس من الثمار.", causes:"تعرض الثمار المباشر لأشعة الشمس الحارة بعد إزالة الأوراق.", treatment:["تظليل النباتات","رش ماء في وقت الذروة","استعادة الغطاء الورقي"], prevention:["عدم التقليم المفرط","الزراعة في اتجاه يوفر ظلاً طبيعياً"] },
+  { id:15, name:"عفن الثمار البكتيري", nameEn:"Bacterial Fruit Rot", type:"بكتيري", plants:["الطماطم","الفلفل","الخيار","الكوسة"], season:"الصيف", severity:"عالية", emoji:"🍅", symptoms:"بقع مائية على الثمار تتوسع وتتعفن بسرعة مع رائحة كريهة.", causes:"بكتيريا Erwinia carotovora تدخل عبر الجروح والحشرات.", treatment:["إزالة الثمار المصابة فوراً","رش نحاسي","تجنب الجروح أثناء التداول"], prevention:["الحصاد الحذر","التخزين الجيد","مكافحة الحشرات"] },
+  { id:16, name:"الأكاروس (العنكبوت الأحمر)", nameEn:"Spider Mites", type:"حشري", plants:["الخيار","الطماطم","الفراولة","العنب","الورد"], season:"الصيف الحار", severity:"متوسطة", emoji:"🕷️", symptoms:"نقاط صفراء صغيرة على الأوراق. خيوط عنكبوتية دقيقة. اصفرار وجفاف الأوراق.", causes:"عث العنكبوت Tetranychus urticae في الطقس الحار الجاف.", treatment:["رش زيت النيم أو زيت معدني","مبيد أكاروسي (أباميكتين)","رفع الرطوبة برش الماء","إدخال أكاروس مفترس بيولوجي"], prevention:["الحفاظ على رطوبة مناسبة","تجنب الإجهاد المائي","الفحص الأسبوعي لأسفل الأوراق"] }
+];
+
+const plants = [
+  {emoji:"🍅",name:"الطماطم",en:"Tomato",diseases:6,info:"نبات سنوي يُزرع في الربيع. يحتاج تربة خصبة جيدة الصرف وشمساً كاملة. يُحصد بعد 60-80 يوماً."},
+  {emoji:"🥒",name:"الخيار",en:"Cucumber",diseases:4,info:"نبات زاحف يحب الدفء والرطوبة. يُزرع في الربيع والصيف. يُحصد بعد 50-70 يوماً."},
+  {emoji:"🥔",name:"البطاطس",en:"Potato",diseases:3,info:"تُزرع الدرنات في الخريف أو الربيع. تحتاج تربة خفيفة جيدة الصرف. تُحصد بعد 70-120 يوماً."},
+  {emoji:"🫑",name:"الفلفل",en:"Pepper",diseases:4,info:"يُزرع في الربيع بالشتلات. يحب الدفء 25-30°م. يُحصد بعد 60-90 يوماً."},
+  {emoji:"🍆",name:"الباذنجان",en:"Eggplant",diseases:3,info:"يحب الحرارة العالية والشمس الكاملة. يُحصد بعد 65-80 يوماً من الزراعة."},
+  {emoji:"🌽",name:"الذرة",en:"Corn",diseases:2,info:"يُزرع بالبذور في صفوف. يحتاج 60-100 يوم للنضج. يحب الشمس الكاملة."},
+  {emoji:"🧅",name:"البصل",en:"Onion",diseases:2,info:"يفضل المناخ البارد. يُحصد بعد 100-120 يوماً عند اصفرار الأوراق."},
+  {emoji:"🧄",name:"الثوم",en:"Garlic",diseases:2,info:"يُزرع بالفصوص في الخريف. يُحصد بعد 8-9 أشهر. الصين أكبر منتج عالمي."},
+  {emoji:"🥬",name:"السبانخ",en:"Spinach",diseases:2,info:"يفضل الطقس البارد 10-20°م. يُحصد بعد 40-55 يوماً. يمكن حصاده عدة مرات."},
+  {emoji:"🥦",name:"البروكلي",en:"Broccoli",diseases:2,info:"يُزرع في مناخ بارد رطب. يُحصد بعد 60-90 يوماً قبل تفتح الأزهار."},
+  {emoji:"🫘",name:"الفاصولياء",en:"Beans",diseases:3,info:"تُزرع بالبذور مباشرة. تُحصد بعد 50-70 يوماً. تتحمل الجفاف النسبي."},
+  {emoji:"🌿",name:"البامية",en:"Okra",diseases:2,info:"تتحمل الحرارة الشديدة. تُحصد بعد 50-65 يوماً. تُقطف الثمار صغيرة طرية."},
+  {emoji:"🍓",name:"الفراولة",en:"Strawberry",diseases:3,info:"تُزرع في الخريف. تحتاج رطوبة كافية. تُحصد في الربيع بعد 3-4 أشهر."},
+  {emoji:"🍇",name:"العنب",en:"Grape",diseases:4,info:"كرمة معمرة تحتاج دعامات. تُقلم في الشتاء. تُحصد في الصيف والخريف."},
+  {emoji:"🍊",name:"البرتقال",en:"Orange",diseases:3,info:"شجرة دائمة الخضرة تحب الدفء. تُثمر في الشتاء. تحتاج ريّاً منتظماً."},
+  {emoji:"🥕",name:"الجزر",en:"Carrot",diseases:2,info:"يُزرع في تربة خفيفة رملية. يفضل المناخ البارد. يُحصد بعد 70-80 يوماً."},
+  {emoji:"🥗",name:"الملفوف",en:"Cabbage",diseases:2,info:"يُزرع في مناخ بارد. يُحصد بعد 80-120 يوماً عند تصلب الرأس."},
+  {emoji:"🌾",name:"القمح",en:"Wheat",diseases:3,info:"يُزرع في الشتاء. يحتاج 120-150 يوماً للنضج. من أهم محاصيل مصر."},
+];
+
+const tips = [
+  {icon:"💧",title:"الري الصحيح",text:"اروِ نباتاتك في الصباح الباكر لتقليل التبخر وتجنب الأمراض الفطرية. استخدم الري بالتنقيط لتوفير المياه."},
+  {icon:"🌱",title:"التربة الصحية",text:"أضف سماداً عضوياً متحللاً للتربة قبل الزراعة. تربة خصبة جيدة الصرف = نباتات قوية مقاومة للأمراض."},
+  {icon:"🔄",title:"التناوب الزراعي",text:"لا تزرع نفس المحصول في نفس الأرض أكثر من 2-3 سنوات. التناوب يكسر دورات الأمراض ويحسن خصوبة التربة."},
+  {icon:"✂️",title:"التقليم المنتظم",text:"قلّم الأوراق الصفراء والمريضة فوراً واحرقها. التقليم يحسن التهوية ويمنع انتشار الفطريات."},
+  {icon:"🌡️",title:"مراقبة الطقس",text:"الطقس الرطب الدافئ يشجع الأمراض الفطرية. اضبط برنامجك الوقائي حسب التوقعات الجوية."},
+  {icon:"🐝",title:"الحشرات النافعة",text:"شجّع وجود الدعسوقة والنحل ودبابير Trichogramma. تجنب المبيدات الواسعة الطيف إلا عند الضرورة."},
+  {icon:"💊",title:"الوقاية خير من العلاج",text:"ارش نباتاتك بمحلول نحاسي وقائي كل 2-3 أسابيع في موسم الأمطار. أرخص وأفضل من العلاجية."},
+  {icon:"🧪",title:"تحليل التربة",text:"حلّل تربتك كل سنتين لمعرفة احتياجاتها من العناصر الغذائية وتعديل pH لأفضل إنتاج."},
+  {icon:"☀️",title:"التظليل في الصيف",text:"في الصيف الشديد الحرارة، وفّر تظليلاً خفيفاً للنباتات الحساسة لتجنب لفحة الشمس وتحسين الإنتاج."},
+  {icon:"📱",title:"استخدم التطبيق",text:"صوّر أي بقعة أو تغيير في نباتاتك وحللها بالذكاء الاصطناعي فوراً. التشخيص المبكر يوفر 80% من تكاليف العلاج."},
+];
+
+const calendarData = {
+  1:  {name:"يناير",  emoji:"❄️",  crops:["الفول","البازلاء","الجرجير","البقدونس","الفراولة"]},
+  2:  {name:"فبراير", emoji:"🌸",  crops:["الطماطم (بيت محمي)","الفلفل","الباذنجان","الكرنب"]},
+  3:  {name:"مارس",   emoji:"🌱",  crops:["الطماطم","الخيار","الكوسة","الفلفل","البطيخ"]},
+  4:  {name:"أبريل",  emoji:"🌿",  crops:["الذرة","الفاصولياء","البامية","الشمام"]},
+  5:  {name:"مايو",   emoji:"☀️",  crops:["البامية","السمسم","الفول السوداني","الذرة"]},
+  6:  {name:"يونيو",  emoji:"🔥",  crops:["البطاطا الحلوة","الفول السوداني","القطن"]},
+  7:  {name:"يوليو",  emoji:"🌻",  crops:["الذرة (دورة ثانية)","البطاطا الحلوة"]},
+  8:  {name:"أغسطس", emoji:"🍅",  crops:["الطماطم (خريفي)","الخيار","الفلفل"]},
+  9:  {name:"سبتمبر",emoji:"🍂",  crops:["الجزر","البصل","الثوم","السبانخ","الخس"]},
+  10: {name:"أكتوبر",emoji:"🥕",  crops:["البروكلي","القرنبيط","الفجل","الملفوف"]},
+  11: {name:"نوفمبر",emoji:"🌾",  crops:["القمح","الشعير","الفول","البازلاء"]},
+  12: {name:"ديسمبر",emoji:"❄️",  crops:["الجرجير","الكزبرة","الشبت","الفراولة"]},
+};
+
+// ===== STATE =====
+let currentFilter = 'all';
+let currentSearch = '';
+let calYear = new Date().getFullYear();
+let uploadedImage = null;
+let isOnline = navigator.onLine;
+
+// ===== CONNECTION =====
+function updateConnectionStatus() {
+  isOnline = navigator.onLine;
+  const el = document.getElementById('connection-status');
+  if (isOnline) {
+    el.textContent = '🟢 متصل بالإنترنت - الذكاء الاصطناعي جاهز';
+    el.className = 'status-online';
+    document.getElementById('scientist-emoji').textContent = '🧑‍🔬';
+  } else {
+    el.textContent = '🔴 لا يوجد إنترنت - تشغيل بدون اتصال (قاعدة البيانات متاحة)';
+    el.className = 'status-offline';
+    document.getElementById('scientist-emoji').textContent = '😴';
+  }
+}
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+updateConnectionStatus();
+
+// Scientist emoji cycle
+const scientistEmojis = ['🧑‍🔬','👨‍🔬','👩‍🔬','🔬','🧫','🌿'];
+let sciIdx = 0;
+document.getElementById('scientist-emoji').addEventListener('click', function(){
+  sciIdx = (sciIdx+1) % scientistEmojis.length;
+  this.textContent = scientistEmojis[sciIdx];
+});
+
+// ===== VOICE SEARCH =====
+function startVoiceSearch() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('متصفحك لا يدعم البحث الصوتي. جرب Chrome!');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SR();
+  recognition.lang = 'ar-EG';
+  recognition.interimResults = false;
+  const btn = document.getElementById('voice-btn');
+  btn.classList.add('listening');
+  btn.textContent = '🔴';
+  recognition.start();
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('voice-search-input').value = text;
+    voiceSearchFilter();
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+  };
+  recognition.onerror = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+  };
+  recognition.onend = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+  };
+}
+
+function startDiseaseVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('متصفحك لا يدعم البحث الصوتي. جرب Chrome!');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SR();
+  recognition.lang = 'ar-EG';
+  recognition.interimResults = false;
+  recognition.start();
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('disease-search').value = text;
+    filterDiseases();
+  };
+}
+
+function voiceSearchFilter() {
+  const q = document.getElementById('voice-search-input').value.trim();
+  const resultsEl = document.getElementById('voice-search-results');
+  if (!q) { resultsEl.style.display = 'none'; return; }
+  const found = diseases.filter(d => d.name.includes(q) || d.plants.join(' ').includes(q) || d.symptoms.includes(q));
+  if (!found.length) { resultsEl.style.display='none'; return; }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = `<p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.5rem">نتائج البحث:</p>` +
+    found.slice(0,3).map(d=>`<div onclick="showDisease(${d.id})" style="padding:0.5rem;border-bottom:1px solid #eee;cursor:pointer;font-size:0.82rem;font-weight:700;color:var(--green-dark)">${d.emoji} ${d.name}</div>`).join('');
+}
+
+// ===== RENDER =====
+function renderDiseases() {
+  const grid = document.getElementById('disease-grid');
+  const filtered = diseases.filter(d => {
+    const matchType = currentFilter==='all' || d.type===currentFilter;
+    const matchSearch = !currentSearch || d.name.includes(currentSearch) || d.plants.join(' ').includes(currentSearch);
+    return matchType && matchSearch;
+  });
+  grid.innerHTML = filtered.map(d=>`
+    <div class="disease-card" onclick="showDisease(${d.id})">
+      <div class="dc-header">
+        <h3>${d.emoji} ${d.name}</h3>
+        <span class="result-badge ${d.severity.includes('جداً')?'badge-danger':d.severity==='عالية'?'badge-warning':'badge-success'}" style="font-size:0.68rem;padding:0.2rem 0.55rem">${d.severity}</span>
+      </div>
+      <div class="dc-body">
+        <p>${d.symptoms.substring(0,85)}...</p>
+        <div class="dc-meta">
+          <span class="dc-tag tag-type">${d.type}</span>
+          <span class="dc-tag tag-season">🗓️ ${d.season}</span>
+          ${d.plants.slice(0,2).map(p=>`<span class="dc-tag tag-plant">${p}</span>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+  if (!filtered.length) grid.innerHTML='<p style="color:var(--green-soft);text-align:center;padding:2rem">لا توجد نتائج 🔍</p>';
+}
+
+function renderPlants(filter='') {
+  const grid = document.getElementById('plants-grid');
+  const filtered = plants.filter(p => !filter || p.name.includes(filter) || p.en.toLowerCase().includes(filter.toLowerCase()));
+  grid.innerHTML = filtered.map(p=>`
+    <div class="plant-mini-card" onclick="showPlantDiseases('${p.name}')">
+      <span class="emoji">${p.emoji}</span>
+      <h3>${p.name}</h3>
+      <p>${p.diseases} أمراض</p>
+    </div>`).join('');
+}
+
+function filterPlants() {
+  renderPlants(document.getElementById('plants-search-input').value);
+}
+
+function renderTips() {
+  document.getElementById('tips-list').innerHTML = tips.map(t=>`
+    <div class="tip-card">
+      <div class="tip-icon">${t.icon}</div>
+      <div class="tip-content"><h4>${t.title}</h4><p>${t.text}</p></div>
+    </div>`).join('');
+}
+
+function renderCalendar() {
+  document.getElementById('cal-year').textContent = calYear;
+  const months = document.getElementById('cal-months');
+  months.innerHTML = Object.entries(calendarData).map(([m,data])=>`
+    <div class="cal-month" onclick="showMonthDetail(${m})">
+      <h4>${data.emoji} ${data.name}</h4>
+      <div class="crops">${data.crops.slice(0,2).map(c=>`<span class="crop-tag">${c}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function changeYear(d) {
+  calYear += d;
+  renderCalendar();
+}
+
+function showMonthDetail(m) {
+  const data = calendarData[m];
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:3rem;text-align:center;margin-bottom:0.5rem">${data.emoji}</div>
+    <div class="modal-title">${data.name} ${calYear}</div>
+    <div class="modal-subtitle">المحاصيل المناسبة للزراعة</div>
+    <div class="modal-section">
+      <h4>🌱 محاصيل شهر ${data.name}</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">
+        ${data.crops.map(c=>`<span class="crop-tag" style="font-size:0.82rem;padding:0.3rem 0.7rem">${c}</span>`).join('')}
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="closeModal()" style="margin-top:1rem">إغلاق</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function filterDiseases() {
+  currentSearch = document.getElementById('disease-search').value;
+  renderDiseases();
+}
+
+function filterByType(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  renderDiseases();
+}
+
+function showDisease(id) {
+  const d = diseases.find(x=>x.id===id);
+  if (!d) return;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:3rem;text-align:center;margin-bottom:0.5rem">${d.emoji}</div>
+    <div class="modal-title">${d.name}</div>
+    <div class="modal-subtitle">${d.nameEn} — ${d.type}</div>
+    <span class="severity-indicator ${d.severity.includes('جداً')?'sev-high':d.severity==='عالية'?'sev-med':'sev-low'}">⚠️ خطورة: ${d.severity}</span>
+    <div class="modal-section"><h4>🌿 النباتات المصابة</h4><p>${d.plants.join(' • ')}</p></div>
+    <div class="modal-section"><h4>🔍 الأعراض</h4><p>${d.symptoms}</p></div>
+    <div class="modal-section"><h4>🦠 الأسباب</h4><p>${d.causes}</p></div>
+    <div class="modal-section"><h4>💊 طرق العلاج</h4><ul>${d.treatment.map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    <div class="modal-section"><h4>🛡️ الوقاية</h4><ul>${d.prevention.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="modal-section"><h4>📅 موسم الظهور</h4><p>${d.season}</p></div>
+    <button class="btn-secondary" onclick="closeModal()" style="margin-top:1rem">إغلاق</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function showPlantDiseases(plantName) {
+  const plantDiseases = diseases.filter(d=>d.plants.includes(plantName));
+  const plant = plants.find(p=>p.name===plantName);
+  document.getElementById('modal-body').innerHTML = `
+    <div style="font-size:3rem;text-align:center;margin-bottom:0.5rem">${plant?plant.emoji:'🌿'}</div>
+    <div class="modal-title">${plantName}</div>
+    <div class="modal-subtitle">${plant?plant.info:''}</div>
+    <div class="modal-section"><h4>🦠 الأمراض الشائعة (${plantDiseases.length})</h4></div>
+    ${plantDiseases.map(d=>`
+      <div class="disease-card" onclick="showDisease(${d.id})" style="margin-bottom:0.7rem">
+        <div class="dc-header"><h3>${d.emoji} ${d.name}</h3></div>
+        <div class="dc-body"><p>${d.symptoms.substring(0,75)}...</p></div>
+      </div>`).join('')}
+    ${!plantDiseases.length?'<p style="color:var(--muted);font-size:0.82rem">لا توجد أمراض موثقة حتى الآن</p>':''}
+    <button class="btn-secondary" onclick="closeModal()" style="margin-top:1rem">إغلاق</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+// ===== SCAN =====
+function handleImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  uploadedImage = file;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('preview-img').src = ev.target.result;
+    document.getElementById('preview-container').style.display = 'block';
+    document.getElementById('analyze-btn').style.display = 'flex';
+    document.getElementById('result-box').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeImage() {
+  if (!uploadedImage) return;
+
+  if (!isOnline) {
+    alert('❌ لا يوجد اتصال بالإنترنت!\n\nالذكاء الاصطناعي يحتاج اتصالاً بالإنترنت للتشخيص.\n\nيمكنك استخدام قاعدة بيانات الأمراض بدون إنترنت من قسم 🦠 الأمراض');
+    return;
+  }
+
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('loading-box').style.display = 'block';
+  document.getElementById('result-box').style.display = 'none';
+
+  const base64 = await toBase64(uploadedImage);
+  const diseaseList = diseases.map(d=>`- ID:${d.id} | ${d.name} (${d.nameEn}) | نوع:${d.type} | أعراض:${d.symptoms.substring(0,80)}`).join('\n');
+
+  const prompt = `أنت أستاذ دكتور وعالم متخصص في أمراض النباتات والزراعة، حاصل على دكتوراه من جامعة القاهرة وشهادات دولية من FAO وUSDA. خبرتك 35 سنة في تشخيص وعلاج أمراض النباتات في مصر والوطن العربي وأفريقيا. شخّصت أكثر من 50,000 حالة في حياتك.
+
+قاعدة أمراض النباتات المتوفرة لديك:
+${diseaseList}
+
+🔬 حلّل الصورة بدقة علمية عالية جداً — افحص كل التفاصيل:
+• الأوراق: لون / بقع / حواف / عروق / قوام / حجم / تجعد / ثقوب / سقوط
+• الجذع والفروع: تعفن / تشقق / تغير لون / نمو غير طبيعي / إفرازات
+• الجذور إن ظهرت: لون / قوام / رائحة / تعفن
+• الثمار إن وجدت: بقع / تشوه / تعفن / لون
+• التربة: رطوبة / تشقق / نمو طحلبي
+• حشرات أو بيض أو مسحوق أو خيوط أو إفرازات
+• قارن الأعراض بقاعدة بياناتك واختر أدق تشخيص
+
+أجب بـ JSON فقط بدون أي نص خارجه:
+{
+  "status": "مريض" أو "صحي",
+  "confidence": رقم 1-100,
+  "disease_name": "اسم المرض العربي أو null",
+  "disease_id": رقم ID أو null,
+  "plant_type": "نوع النبتة بالعربي بدقة",
+  "plant_part": "الجزء المصاب",
+  "severity": "خفيفة" أو "متوسطة" أو "شديدة" أو "صحي",
+  "infection_percentage": رقم 0-100,
+  "symptoms_observed": "وصف علمي تفصيلي دقيق جداً لكل الأعراض الظاهرة",
+  "causes": "الأسباب العلمية الكاملة مع اسم الكائن المسبب إن وجد",
+  "immediate_action": "الإجراء الفوري خلال 24 ساعة — محدد وعملي جداً",
+  "treatment_steps": ["خطوة 1 مع المادة والكمية والطريقة","خطوة 2","خطوة 3","خطوة 4","خطوة 5","خطوة 6"],
+  "natural_remedies": ["علاج طبيعي 1 مع طريقة التحضير","علاج طبيعي 2","علاج طبيعي 3"],
+  "chemical_remedies": ["اسم المبيد + الجرعة + طريقة الاستخدام","مبيد 2","مبيد 3"],
+  "prevention_tips": ["نصيحة وقاية مستقبلية 1","نصيحة 2","نصيحة 3","نصيحة 4"],
+  "best_time_to_treat": "أفضل وقت للعلاج مع السبب",
+  "weather_warning": "تأثير الطقس والرطوبة والحرارة على المرض والعلاج",
+  "soil_advice": "نصيحة عن التربة والري المناسب أثناء العلاج",
+  "nutrition_advice": "تسميد أو عناصر غذائية تساعد في التعافي",
+  "recovery_chance": "عالية" أو "متوسطة" أو "منخفضة",
+  "recovery_days": رقم أيام التعافي المتوقعة,
+  "similar_diseases": ["مرض مشابه يجب التمييز منه مع الفرق","مرض 2"],
+  "emergency_signs": "علامات تدل على تفاقم الحالة وتستوجب تدخلاً فورياً",
+  "summary": "ملخص تشخيصي احترافي واضح في 2-3 جمل"
+}`;
+
+  try {
+    const rawText = await callAI({
+      prompt,
+      imageType: uploadedImage.type,
+      imageData: base64
+    }, true);
+
+    const clean = rawText.replace(/```json|```/g,'').trim();
+    let result;
+    try { result = JSON.parse(clean); } catch { result = null; }
+
+    document.getElementById('loading-box').style.display = 'none';
+    document.getElementById('result-box').style.display = 'block';
+    result ? showAIResult(result) : showFallbackResult(rawText);
+
+  } catch(err) {
+    document.getElementById('loading-box').style.display = 'none';
+    document.getElementById('result-box').style.display = 'block';
+    
+    // Check if offline
+    if (!navigator.onLine) {
+      document.getElementById('result-content').innerHTML = `
+        <div style="background:#fff3f3;border:1px solid #ffcdd2;border-radius:14px;padding:1.5rem;margin-bottom:1rem;text-align:center">
+          <div style="font-size:3rem;margin-bottom:0.7rem">📡</div>
+          <p style="color:#c62828;font-weight:900;font-size:1rem">انقطع الاتصال بالإنترنت!</p>
+          <p style="font-size:0.82rem;color:#555;margin-top:0.5rem;line-height:1.6">تأكد من اتصالك بالإنترنت وأعد المحاولة.<br>يمكنك استخدام قاعدة بيانات الأمراض بدون إنترنت.</p>
+        </div>`;
+    } else {
+      document.getElementById('result-content').innerHTML = `
+        <div style="background:#fff3f3;border:1px solid #ffcdd2;border-radius:14px;padding:1.5rem;margin-bottom:1rem;text-align:center">
+          <div style="font-size:3rem;margin-bottom:0.7rem">⚠️</div>
+          <p style="color:#c62828;font-weight:900">خطأ في التشخيص</p>
+          <p style="font-size:0.82rem;color:#555;margin-top:0.5rem">تحقق من اتصالك وأعد المحاولة</p>
+        </div>`;
+    }
+  }
+}
+
+function showAIResult(r) {
+  // Update stats
+  stats.diag++;
+  stats.pts += r.status==='صحي' ? 5 : 15;
+  if(r.status==='صحي') stats.healthy++; else stats.sick++;
+  saveStats(); updateStatsUI();
+
+  const isHealthy = r.status==='صحي';
+  const diseaseData = r.disease_id ? diseases.find(d=>d.id===r.disease_id) : null;
+  const badgeClass = isHealthy?'badge-success':r.severity==='شديدة'?'badge-danger':'badge-warning';
+  const recoveryColor = r.recovery_chance==='عالية'?'#27ae60':r.recovery_chance==='متوسطة'?'#f39c12':'#e74c3c';
+  const sevColor = r.severity==='شديدة'?'#e74c3c':r.severity==='متوسطة'?'#f39c12':'#27ae60';
+
+  let html = `
+    <div class="result-header">
+      <div class="result-emoji">${isHealthy?'✅':'🔬'}</div>
+      <div class="result-title">
+        <h3>${isHealthy?'النبتة بصحة ممتازة! 🌿':r.disease_name||'مرض محتمل'}</h3>
+        <span>${r.plant_type||'نبتة'} ${r.plant_part?'• '+r.plant_part:''}</span>
+      </div>
+      <span class="result-badge ${badgeClass}">${isHealthy?'صحية':r.severity}</span>
+    </div>
+    <div class="result-body">
+
+      <div class="result-section">
+        <h4>📊 نسبة الثقة في التشخيص</h4>
+        <div style="display:flex;align-items:center;gap:0.7rem">
+          <div class="confidence-bar" style="flex:1"><div class="confidence-fill" id="conf-fill"></div></div>
+          <span style="font-weight:900;font-size:1rem;color:var(--green-dark)">${r.confidence}%</span>
+        </div>
+      </div>`;
+
+  if (!isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🩺 تقرير الإصابة</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.3rem">
+          <div style="background:#f8f9fa;border-radius:10px;padding:0.6rem;text-align:center">
+            <div style="font-size:1.3rem;font-weight:900;color:${sevColor}">${r.infection_percentage||'--'}%</div>
+            <div style="font-size:0.68rem;color:#888">نسبة الإصابة</div>
+          </div>
+          <div style="background:#f8f9fa;border-radius:10px;padding:0.6rem;text-align:center">
+            <div style="font-size:1rem;font-weight:900;color:${recoveryColor}">${r.recovery_chance||'--'}</div>
+            <div style="font-size:0.68rem;color:#888">فرصة التعافي</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  html += `
+      <div class="result-section">
+        <h4>🔍 الأعراض الملاحظة</h4>
+        <p>${r.symptoms_observed||r.summary}</p>
+      </div>`;
+
+  if (r.causes && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🦠 أسباب المرض</h4>
+        <p>${r.causes}</p>
+      </div>`;
+  }
+
+  html += `
+      <div class="result-section">
+        <h4>⚡ الإجراء الفوري (خلال 24 ساعة)</h4>
+        <p style="color:#c0392b;font-weight:700">${r.immediate_action}</p>
+      </div>`;
+
+  if (r.treatment_steps && r.treatment_steps.length && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>💊 خطوات العلاج التفصيلية</h4>
+        <ol style="padding-right:1.2rem">${r.treatment_steps.map(t=>`<li style="margin-bottom:0.4rem">${t}</li>`).join('')}</ol>
+      </div>`;
+  } else if (diseaseData && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>💊 خطوات العلاج</h4>
+        <ul>${diseaseData.treatment.map(t=>`<li>${t}</li>`).join('')}</ul>
+      </div>`;
+  }
+
+  if (r.natural_remedies && r.natural_remedies.length && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🌿 علاجات طبيعية</h4>
+        <ul>${r.natural_remedies.map(t=>`<li>${t}</li>`).join('')}</ul>
+      </div>`;
+  }
+
+  if (r.chemical_remedies && r.chemical_remedies.length && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🧪 علاجات كيميائية (عند الضرورة)</h4>
+        <ul>${r.chemical_remedies.map(t=>`<li>${t}</li>`).join('')}</ul>
+      </div>`;
+  }
+
+  if (r.prevention_tips && r.prevention_tips.length) {
+    html += `
+      <div class="result-section">
+        <h4>🛡️ نصائح الوقاية المستقبلية</h4>
+        <ul>${r.prevention_tips.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>`;
+  } else if (diseaseData && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🛡️ الوقاية المستقبلية</h4>
+        <ul>${diseaseData.prevention.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>`;
+  }
+
+  if (r.best_time_to_treat && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>⏰ أفضل وقت للعلاج</h4>
+        <p>${r.best_time_to_treat}</p>
+      </div>`;
+  }
+
+  if (r.weather_warning && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🌡️ تحذير الطقس</h4>
+        <p style="color:#e67e22">${r.weather_warning}</p>
+      </div>`;
+  }
+
+  if (r.soil_advice && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🪱 نصيحة التربة والري</h4>
+        <p>${r.soil_advice}</p>
+      </div>`;
+  }
+
+  if (r.nutrition_advice && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>🌱 التسميد والتغذية</h4>
+        <p>${r.nutrition_advice}</p>
+      </div>`;
+  }
+
+  if (r.recovery_days && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>📅 مدة التعافي المتوقعة</h4>
+        <p><strong style="color:var(--green-dark);font-size:1.1rem">${r.recovery_days} يوم</strong> مع الالتزام بخطة العلاج</p>
+      </div>`;
+  }
+
+  if (r.emergency_signs && !isHealthy) {
+    html += `
+      <div class="result-section" style="background:#fff5f5;border-radius:10px;padding:0.7rem;border-right:3px solid #e74c3c">
+        <h4>🚨 علامات التفاقم — راقبها!</h4>
+        <p style="color:#c0392b">${r.emergency_signs}</p>
+      </div>`;
+  }
+
+  if (r.similar_diseases && r.similar_diseases.length && !isHealthy) {
+    html += `
+      <div class="result-section">
+        <h4>⚠️ أمراض مشابهة احذر منها</h4>
+        <ul>${r.similar_diseases.map(d=>`<li>${d}</li>`).join('')}</ul>
+      </div>`;
+  }
+
+  // Button to ask AI for more details
+  html += `
+      <button class="btn-secondary" onclick="askAboutDiagnosis('${(r.disease_name||r.plant_type||'النبات').replace(/'/g,'')}')" style="margin-top:0.5rem;margin-bottom:0.5rem;background:linear-gradient(135deg,#0f3d20,#1e7a3a);color:#fff">
+        💬 اسأل الخبير عن هذا المرض
+      </button>`;
+
+  if (!isHealthy) {
+    html += `
+      <button class="btn-secondary" onclick="generateWeeklyPlan('${(r.disease_name||'المرض').replace(/'/g,'')}','${(r.plant_type||'النبات').replace(/'/g,'')}','${(r.severity||'متوسطة').replace(/'/g,'')}')" style="margin-bottom:0.5rem;background:linear-gradient(135deg,#1a3a6e,#2980b9);color:#fff">
+        📋 اطلب خطة علاج أسبوعية كاملة
+      </button>`;
+  }
+
+  if (diseaseData) {
+    html += `<button class="btn-secondary" onclick="showDisease(${diseaseData.id})" style="margin-bottom:0.8rem">📖 تفاصيل كاملة من قاعدة البيانات</button>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('result-content').innerHTML = html;
+  setTimeout(()=>{ const f=document.getElementById('conf-fill'); if(f) f.style.width=r.confidence+'%'; },100);
+}
+
+function showFallbackResult(text) {
+  document.getElementById('result-content').innerHTML = `
+    <div class="result-header">
+      <div class="result-emoji">🤖</div>
+      <div class="result-title"><h3>نتيجة التحليل</h3><span>الذكاء الاصطناعي</span></div>
+    </div>
+    <div class="result-body">
+      <div class="result-section"><h4>📋 تقرير الذكاء الاصطناعي</h4><p>${text}</p></div>
+    </div>`;
+}
+
+function resetScan() {
+  uploadedImage = null;
+  document.getElementById('preview-container').style.display = 'none';
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('result-box').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('camera-input').value = '';
+  document.getElementById('voice-search-input').value = '';
+  document.getElementById('voice-search-results').style.display = 'none';
+}
+
+function toBase64(file) {
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(new Error('خطأ')); r.readAsDataURL(file); });
+}
+
+// ===== NAV =====
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== BG =====
+function createBg() {
+  const leaves = ['🌿','🍃','🌱','🍀','🌾','🍂'];
+  const c = document.getElementById('bgCanvas');
+  for (let i=0;i<18;i++) {
+    const l = document.createElement('div');
+    l.className = 'leaf';
+    l.textContent = leaves[Math.floor(Math.random()*leaves.length)];
+    l.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--s:${(Math.random()*2+1).toFixed(1)}rem;--d:${(Math.random()*6+5).toFixed(1)}s;--delay:${(Math.random()*4).toFixed(1)}s`;
+    c.appendChild(l);
+  }
+}
+
+// ===== CALL AI =====
+async function callAI(payload, isImage = false) {
+  const messages = isImage
+    ? [{role:"user", content:[
+        {type:"image", source:{type:"base64", media_type:payload.imageType, data:payload.imageData}},
+        {type:"text", text:payload.prompt}
+      ]}]
+    : [{role:"user", content: payload.prompt}];
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
+      messages
+    })
+  });
+
+  if (!res.ok) throw new Error('API Error: ' + res.status);
+  const data = await res.json();
+  return data.content.map(i => i.text || '').join('');
+}
+
+// ===== STATS =====
+let stats = JSON.parse(localStorage.getItem('plantStats')||'{"diag":0,"pts":0,"sick":0,"healthy":0}');
+
+function saveStats(){localStorage.setItem('plantStats',JSON.stringify(stats));}
+
+function updateStatsUI(){
+  ['diag','pts','sick','healthy'].forEach(k=>{
+    const els = document.querySelectorAll(`#stat-${k},#big-${k}`);
+    els.forEach(el=>{if(el) el.textContent=stats[k];});
+  });
+  updateLevel();
+}
+
+function updateLevel(){
+  const d=stats.diag;
+  const levels=[
+    {min:0,max:5,emoji:'🌱',title:'مزارع مبتدئ',desc:'شخّص 5 نباتات للترقي'},
+    {min:5,max:15,emoji:'🌿',title:'مزارع متحمس',desc:'شخّص 15 نباتاً للترقي'},
+    {min:15,max:30,emoji:'🌳',title:'مزارع محترف',desc:'شخّص 30 نباتاً للترقي'},
+    {min:30,max:60,emoji:'👨‍🌾',title:'خبير زراعي',desc:'شخّص 60 نباتاً للترقي'},
+    {min:60,max:999,emoji:'🏆',title:'عالم نباتات',desc:'أنت وصلت القمة!'},
+  ];
+  const lv=levels.find(l=>d>=l.min&&d<l.max)||levels[levels.length-1];
+  const next=levels.find(l=>l.min>d);
+  const pct=next?Math.min(100,((d-lv.min)/(next.min-lv.min))*100):100;
+  const el=document.getElementById('level-emoji');const tl=document.getElementById('level-title');
+  const dl=document.getElementById('level-desc');const bar=document.getElementById('level-bar');
+  if(el)el.textContent=lv.emoji;if(tl)tl.textContent=lv.title;
+  if(dl)dl.textContent=lv.desc;if(bar)setTimeout(()=>bar.style.width=pct+'%',100);
+}
+
+// ===== COMPARE =====
+function loadCompareImg(side, e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const div=document.getElementById(side+'-preview');
+    div.innerHTML=`<img src="${ev.target.result}" style="width:100%;height:140px;object-fit:cover">`;
+    document.getElementById('compare-note').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+function saveCompare(){
+  stats.pts+=10; stats.diag++; saveStats(); updateStatsUI();
+  alert('✅ تم حفظ المقارنة! +10 نقطة 🏆');
+}
+
+// ===== VOICE SYMPTOMS =====
+function startSymptomVoice() {
+  const btn = document.getElementById('voice-sym-btn');
+  const wrap = document.getElementById('symptom-text-wrap');
+  wrap.style.display = 'block';
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    document.getElementById('symptom-textarea').placeholder = 'اكتب الأعراض هنا...';
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'ar-EG';
+  rec.interimResults = false;
+  btn.classList.add('listening');
+  btn.textContent = '🔴 يستمع... تكلم الآن';
+  rec.start();
+  rec.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('symptom-textarea').value = text;
+    btn.classList.remove('listening');
+    btn.textContent = '🎤 صف الأعراض بصوتك';
+  };
+  rec.onerror = rec.onend = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎤 صف الأعراض بصوتك';
+  };
+}
+
+// ===== DIAGNOSE FROM TEXT =====
+async function analyzeSymptoms() {
+  const text = document.getElementById('symptom-textarea').value.trim();
+  if (!text) { alert('اكتب الأعراض أولاً!'); return; }
+  if (!isOnline) { alert('❌ لا يوجد اتصال بالإنترنت!'); return; }
+
+  document.getElementById('symptom-text-wrap').style.display = 'none';
+  document.getElementById('loading-box').style.display = 'block';
+  document.getElementById('result-box').style.display = 'none';
+
+  const diseaseList = diseases.map(d=>`- ID:${d.id} | ${d.name} | ${d.type} | ${d.symptoms.substring(0,70)}`).join('\n');
+
+  const prompt = `أنت د. نبات، خبير أمراض نباتات. المزارع وصف هذه الأعراض: "${text}"
+
+قاعدة الأمراض المتاحة:
+${diseaseList}
+
+شخّص المرض وأجب بـ JSON فقط:
+{
+  "status": "مريض" أو "صحي",
+  "confidence": رقم 1-100,
+  "disease_name": "اسم المرض أو null",
+  "disease_id": رقم أو null,
+  "plant_type": "نوع النبتة المذكورة أو المحتملة",
+  "plant_part": "الجزء المصاب",
+  "severity": "خفيفة" أو "متوسطة" أو "شديدة" أو "صحي",
+  "infection_percentage": رقم 0-100,
+  "symptoms_observed": "تلخيص الأعراض الموصوفة",
+  "causes": "الأسباب المحتملة",
+  "immediate_action": "الإجراء الفوري",
+  "treatment_steps": ["خطوة 1","خطوة 2","خطوة 3","خطوة 4"],
+  "prevention_tips": ["نصيحة 1","نصيحة 2","نصيحة 3"],
+  "best_time_to_treat": "أفضل وقت للعلاج",
+  "recovery_chance": "عالية" أو "متوسطة" أو "منخفضة",
+  "summary": "ملخص تشخيصي"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    if (!res.ok) throw new Error('API Error');
+    const data = await res.json();
+    const rawText = data.content.map(i=>i.text||'').join('');
+    const clean = rawText.replace(/```json|```/g,'').trim();
+    let result;
+    try { result = JSON.parse(clean); } catch { result = null; }
+    document.getElementById('loading-box').style.display = 'none';
+    document.getElementById('result-box').style.display = 'block';
+    result ? showAIResult(result) : showFallbackResult(rawText);
+  } catch(err) {
+    document.getElementById('loading-box').style.display = 'none';
+    document.getElementById('result-box').style.display = 'block';
+    document.getElementById('result-content').innerHTML = `<div style="text-align:center;padding:1.5rem;background:#fff3f3;border-radius:14px"><div style="font-size:2.5rem">⚠️</div><p style="color:#c0392b;font-weight:700;margin-top:0.5rem">حدث خطأ. أعد المحاولة</p></div>`;
+  }
+}
+
+// ===== WEEKLY PLAN =====
+async function generateWeeklyPlan(disease, plant, severity) {
+  if (!isOnline) { alert('❌ لا يوجد اتصال بالإنترنت!'); return; }
+
+  // Switch to chat and show plan
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-chat').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>{if(t.textContent.includes('اسأل'))t.classList.add('active');});
+
+  const q = `نباتي "${plant}" مصاب بـ "${disease}" وشدة الإصابة ${severity}. أعطني خطة علاج أسبوعية كاملة ومفصلة يوم بيوم لمدة أسبوعين، مع تحديد: المواد المستخدمة، الكميات، مواعيد الرش، وعلامات التعافي التي يجب ملاحظتها.`;
+
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+function askAboutDiagnosis(diseaseName) {
+  // Switch to chat tab
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-chat').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>{ if(t.textContent.includes('اسأل')) t.classList.add('active'); });
+  // Pre-fill question
+  const q = `شخّص تطبيقك بأن نباتي مصاب بـ "${diseaseName}". أخبرني بكل التفاصيل عن هذا المرض وكيف أعالجه وأقيه مستقبلاً؟`;
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+// ===== CHAT =====
+let chatHistory = [];
+
+const PLANT_SYSTEM = `أنت د. نبات، أستاذ دكتور وعالم عالمي في علم النباتات وأمراضها، حاصل على دكتوراه من جامعة القاهرة وشهادات دولية من FAO وUSDA وWHO. خبرتك 35 سنة في الميدان، شخّصت أكثر من 50,000 حالة زراعية في مصر والوطن العربي وأفريقيا.
+
+🎓 تخصصاتك الكاملة:
+🌿 تشخيص جميع أمراض النباتات: فطرية، بكتيرية، فيروسية، حشرية، تغذوية، فسيولوجية
+💧 أنظمة الري: بالتنقيط، الرش، الغمر — الكميات والمواعيد لكل نبتة وكل موسم
+🐛 مكافحة الآفات والحشرات: المن، التربس، الحلم، الذبابة البيضاء، الجراد، الدودة
+🌱 الزراعة الكاملة: من اختيار البذرة والتربة والسماد حتى الحصاد والتخزين
+🪴 النباتات المنزلية: الزينة، السكولنت، النخيل المنزلي، الأوركيد، الفيكس
+🌾 المحاصيل الحقلية: قمح، ذرة، قطن، قصب سكر، بنجر، دوار الشمس، فول سوداني
+🍎 أشجار الفاكهة: مانجو، موز، عنب، تفاح، كمثرى، خوخ، مشمش، تين، رمان
+🥦 الخضروات بجميع أنواعها: ورقية، ثمرية، درنية، جذرية
+🌺 الزهور والورد والياسمين والفل
+🧪 تحليل التربة: pH، ملوحة، صرف، تسميد عضوي وكيميائي
+🌡️ التكيف مع المناخ: حرارة، رطوبة، رياح، صقيع، جفاف
+🔬 الزراعة العضوية والبيولوجية والمائية (هيدروبونيك)
+🏭 الزراعة في الصوب والبيوت المحمية
+🌍 الزراعة المستدامة وتدوير المياه والكمبوست
+
+📋 قواعد إجاباتك الذهبية:
+✅ ابدأ دائماً بتشخيص المشكلة ثم الحل
+✅ قدّم دائماً: البديل الطبيعي أولاً ثم الكيميائي عند الضرورة
+✅ حدد الكميات بدقة: "ملعقة كبيرة في 10 لتر" وليس "قليلاً"
+✅ حدد المواعيد بدقة: "الساعة 6-8 صباحاً" وليس "الصباح"
+✅ اذكر مدة العلاج وموعد التكرار
+✅ نبّه على مخاطر المبيدات وضرورة القفازات والكمامة
+✅ اقترح علامات التحسن التي يجب ملاحظتها
+✅ اذكر علامات التفاقم التي تستوجب استشارة خبير
+✅ أضف نصائح وقاية مستقبلية في نهاية كل إجابة
+✅ استخدم عناوين وأرقام ورموز تعبيرية لتسهيل القراءة
+✅ اذكر الأسعار التقريبية بالجنيه المصري إذا أمكن
+✅ إذا كانت الحالة طارئة ابدأ بـ 🚨 تحذير عاجل
+
+🚫 إذا كان السؤال خارج النباتات والزراعة تماماً قل بلطف:
+"أنا د. نبات، متخصص في النباتات والزراعة فقط 🌿 هل لديك سؤال عن نباتاتك؟"`;
+
+function addMsg(text, role) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = role === 'user' ? 'msg msg-user' : 'msg msg-bot';
+  div.innerHTML = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg-typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = 'د. نبات يكتب<span>.</span><span>.</span><span>.</span>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const q = input.value.trim();
+  if (!q) return;
+
+  if (!isOnline) {
+    addMsg('❌ لا يوجد اتصال بالإنترنت. تأكد من الاتصال وأعد المحاولة.', 'bot');
+    return;
+  }
+
+  input.value = '';
+  addMsg(q, 'user');
+  chatHistory.push({ role: 'user', content: q });
+
+  const btn = document.getElementById('chat-send-btn');
+  btn.disabled = true;
+  addTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: PLANT_SYSTEM,
+        messages: chatHistory
+      })
+    });
+
+    if (!res.ok) throw new Error('API Error');
+    const data = await res.json();
+    const reply = data.content.map(i => i.text || '').join('');
+
+    removeTyping();
+    const formatted = reply
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n\n/g, '<br><br>')
+      .replace(/\n/g, '<br>')
+      .replace(/^(\d+\.\s)/gm, '<br>$1');
+    addMsg(formatted, 'bot');
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    // Keep history max 20 messages
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+  } catch (err) {
+    removeTyping();
+    addMsg('⚠️ حدث خطأ. تأكد من الاتصال بالإنترنت وأعد المحاولة.', 'bot');
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+function askQuick(q) {
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+// ===== GUIDE RENDER =====
+function renderGuide(){
+  const types=[
+    {ico:'🍄',t:'أمراض فطرية',d:'تنتشر في الطقس الرطب الدافئ. العلاج بالمبيدات الفطرية والكبريت.'},
+    {ico:'🦠',t:'أمراض بكتيرية',d:'تنتقل بالمياه والحشرات والأدوات الملوثة. تُعالَج بالنحاسيات.'},
+    {ico:'🔴',t:'أمراض فيروسية',d:'لا علاج مباشر. المكافحة بالحشرات الناقلة والاقتلاع.'},
+    {ico:'🐛',t:'آفات حشرية',d:'تُكافَح بالمبيدات الحيوية والكيميائية والأعداء الطبيعية.'},
+    {ico:'🌿',t:'نقص غذائي',d:'يُعالَج بتصحيح التسميد وتعديل pH التربة.'},
+  ];
+  const dtEl=document.getElementById('disease-types-list');
+  if(dtEl) dtEl.innerHTML=types.map(g=>`<div style="background:var(--card-bg);border-radius:12px;padding:0.8rem;display:flex;gap:0.8rem;align-items:flex-start"><span style="font-size:1.8rem">${g.ico}</span><div><div style="font-weight:900;font-size:0.85rem;color:var(--green-dark)">${g.t}</div><p style="font-size:0.75rem;color:#555;line-height:1.5;margin-top:0.2rem">${g.d}</p></div></div>`).join('');
+
+  const indicators=[
+    {s:'✅',t:'صحي',d:'أوراق خضراء زاهية، نمو طبيعي، بدون بقع'},
+    {s:'🟡',t:'تحت المراقبة',d:'اصفرار خفيف أو بقع صغيرة — راقب يومياً'},
+    {s:'🟠',t:'مريض - يحتاج علاج',d:'أعراض واضحة — ابدأ العلاج فوراً'},
+    {s:'🔴',t:'حالة حرجة',d:'انتشار سريع — عزل فوري واستشارة خبير'},
+  ];
+  const hiEl=document.getElementById('health-indicators');
+  if(hiEl) hiEl.innerHTML=indicators.map(g=>`<div style="display:flex;align-items:center;gap:0.8rem;padding:0.6rem 0;border-bottom:1px solid #f0f0f0"><span style="font-size:1.4rem">${g.s}</span><div><div style="font-weight:700;font-size:0.82rem;color:var(--green-dark)">${g.t}</div><div style="font-size:0.72rem;color:#777">${g.d}</div></div></div>`).join('');
+
+  const watering=[
+    ['🍅 طماطم','كل 2-3 أيام','شمس كاملة'],
+    ['🥒 خيار','يومياً','شمس كاملة'],
+    ['🫑 فلفل','كل 2-3 أيام','شمس كاملة'],
+    ['🥬 سبانخ','كل 2-3 أيام','شمس/ظل خفيف'],
+    ['🍓 فراولة','كل 2-3 أيام','شمس جزئية'],
+    ['🌿 أعشاب','كل 3-4 أيام','شمس/ظل'],
+  ];
+  const wtEl=document.getElementById('watering-table');
+  if(wtEl) wtEl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:0.78rem"><thead><tr style="background:linear-gradient(135deg,#1e7a3a,#27ae60);color:#fff"><th style="padding:0.6rem;text-align:right">النبتة</th><th style="padding:0.6rem;text-align:center">الري</th><th style="padding:0.6rem;text-align:center">الضوء</th></tr></thead><tbody>${watering.map((r,i)=>`<tr style="background:${i%2?'#f9f9f9':'#fff'}"><td style="padding:0.55rem 0.7rem">${r[0]}</td><td style="padding:0.55rem 0.7rem;text-align:center;color:#1e7a3a;font-weight:700">${r[1]}</td><td style="padding:0.55rem 0.7rem;text-align:center;color:#f9a825;font-weight:700">${r[2]}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// ===== INIT =====
+createBg();
+renderDiseases();
+renderPlants();
+renderTips();
+renderCalendar();
+renderGuide();
+updateStatsUI();
+</script>
+</body>
+</html>
