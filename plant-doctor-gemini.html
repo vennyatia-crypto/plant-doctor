@@ -1341,19 +1341,18 @@ async function callAI(payload, isImage = false) {
     const parts = [];
     if (isImage) {
       parts.push({
-        inline_data: {
-          mime_type: payload.imageType || 'image/jpeg',
+        inlineData: {
+          mimeType: payload.imageType || 'image/jpeg',
           data: payload.imageData
         }
       });
     }
     parts.push({text: payload.prompt});
-    const modelName = isImage ? 'gemini-1.5-pro-latest' : 'gemini-1.5-flash';
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        contents:[{role:'user', parts}],
+        contents:[{parts}],
         generationConfig:{maxOutputTokens:4000, temperature:0.1}
       })
     });
