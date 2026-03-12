@@ -1348,7 +1348,7 @@ async function callAI(payload, isImage = false) {
       });
     }
     parts.push({text: payload.prompt});
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -1644,7 +1644,7 @@ async function sendChat() {
       chatHistory.forEach(m => geminiContents.push({
         role: m.role==='user'?'user':'model', parts:[{text:m.content}]
       }));
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({contents:geminiContents, generationConfig:{maxOutputTokens:4000,temperature:0.7}})
       });
