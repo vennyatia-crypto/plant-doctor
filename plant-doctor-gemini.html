@@ -1310,7 +1310,7 @@ function hasClaudeKey() { return !!localStorage.getItem('claudeKey'); }
 
 async function callAI(payload, isImage = false) {
   const claudeKey = localStorage.getItem('claudeKey');
-  const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyBB0jQgWuwErlGMn_5TadSQHOe4B8jMUqs';
+  const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyDbdqV6tobg44PM1MIKezbr4J9ts7yFqZg';
 
   if (!claudeKey && !geminiKey) {
     alert("أدخل Gemini API Key أولاً");
@@ -1608,7 +1608,7 @@ async function sendChat() {
   try {
     const key = localStorage.getItem('geminiKey');
     const claudeKey = localStorage.getItem('claudeKey');
-    const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyBB0jQgWuwErlGMn_5TadSQHOe4B8jMUqs';
+    const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyDbdqV6tobg44PM1MIKezbr4J9ts7yFqZg';
     let reply = '';
 
     if (claudeKey) {
