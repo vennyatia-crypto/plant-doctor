@@ -1310,7 +1310,7 @@ function hasClaudeKey() { return !!localStorage.getItem('claudeKey'); }
 
 async function callAI(payload, isImage = false) {
   const claudeKey = localStorage.getItem('claudeKey');
-  const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyDji3tj0wSC5NaZqjtQKCu4_X0LNo3Yuq0';
+  const geminiKey = localStorage.getItem('geminiKey');
 
   if (!claudeKey && !geminiKey) {
     alert("أدخل Gemini API Key أولاً");
@@ -1377,8 +1377,10 @@ function saveGeminiKey() {
 }
 
 function checkGeminiKey() {
-  // Key is embedded in code — no need to ask user
-  document.getElementById('api-setup').style.display = 'none';
+  const key = localStorage.getItem('geminiKey');
+  if (!key) {
+    document.getElementById('api-setup').style.display = 'flex';
+  }
 }
 
 // ===== STATS =====
@@ -1621,7 +1623,7 @@ async function sendChat() {
   try {
     const key = localStorage.getItem('geminiKey');
     const claudeKey = localStorage.getItem('claudeKey');
-    const geminiKey = localStorage.getItem('geminiKey') || 'AIzaSyDji3tj0wSC5NaZqjtQKCu4_X0LNo3Yuq0';
+    const geminiKey = localStorage.getItem('geminiKey');
     let reply = '';
 
     if (claudeKey) {
